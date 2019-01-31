@@ -48,24 +48,24 @@ Installation:
 Command Line Examples:
 =====================
 
-- Simple query:
-   ./src/dnsquery -d8.8.8.8 -sgoogle.it
-   216.58.205.195
+- Simple query:<BR>
+   ./src/dnsquery -d8.8.8.8 -sgoogle.it<BR>
+   216.58.205.195<BR><BR>
 
-- Simple query with length:
-  ./src/dnsquery -d8.8.8.8 -sgoogle.it -l
-  Response Length: 43
-  216.58.205.195
+- Simple query with length:<BR>
+  ./src/dnsquery -d8.8.8.8 -sgoogle.it -l<BR>
+  Response Length: 43<BR>
+  216.58.205.195<BR><BR>
 
-- Decode the previous file:
-  ./src/dtmf -t./xxx  -o./dtmf.bintest.again
+- Decode the previous file:<BR>
+  ./src/dtmf -t./xxx  -o./dtmf.bintest.again<BR><BR>
 
-- "Ping" mode:
-  ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping
-  43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms
-  43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms
-  43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms
-  43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms
+- "Ping" mode:<BR>
+  ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
+  43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms<BR>
+  43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
+  43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms<BR>
+  43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms<BR>
 
 - Dump mode:
 
