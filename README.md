@@ -45,8 +45,8 @@ Installation:
 - Install the program and the man page:
   sudo make install
 
-CMD Line Exmples:
-=================
+Command Line Exmples:
+====================
 
 - Simple query:
    ./src/dnsquery -d8.8.8.8 -sgoogle.it
@@ -64,24 +64,4 @@ CMD Line Exmples:
   43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms
   43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms
 - Dump mode:
-  ./src/dnsquery -d8.8.8.8 -sgoogle.it -tdump
-   Elapsed Time: 0.046115
-   
-   Response Length: 43
-   
-   Message sent:
-   
-   00000:  49 1f 01 00 00 01 00 00 00 00 00 00 06 67 6f 6f  I............goo
-   00016:  67 6c 65 02 69 74 00 00 01 00 01                 gle.it.....
-   
-   
-   Message received:
-   
-   00000:  49 1f 81 80 00 01 00 01 00 00 00 00 06 67 6f 6f  I............goo
-   00016:  67 6c 65 02 69 74 00 00 01 00 01 c0 0c 00 01 00  gle.it..........
-   00032:  01 00 00 01 2b 00 04 d8 3a cd c3                 ....+...:..
-   
-   
-   
-   DNS Lookup: Query: google.it
-   DNS Lookup: Resp: 216.58.205.195
+  ![alt text](picts/dump.png "Dump Mode")
