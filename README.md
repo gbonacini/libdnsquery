@@ -45,8 +45,8 @@ Installation:
 - Install the program and the man page:
   sudo make install
 
-Command Line Exmples:
-====================
+Command Line Examples:
+=====================
 
 - Simple query:
    ./src/dnsquery -d8.8.8.8 -sgoogle.it
