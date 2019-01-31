@@ -51,17 +51,22 @@ Command Line Examples:
 - Simple query:
    ./src/dnsquery -d8.8.8.8 -sgoogle.it
    216.58.205.195
+
 - Simple query with length:
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -l
   Response Length: 43
   216.58.205.195
+
 - Decode the previous file:
   ./src/dtmf -t./xxx  -o./dtmf.bintest.again
+
 - "Ping" mode:
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping
   43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms
   43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms
   43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms
   43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms
+
 - Dump mode:
-  ![alt text](picts/dump.png "Dump Mode")
+
+![alt text](pitcs/dump.png "Dump Mode")
