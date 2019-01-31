@@ -50,15 +50,15 @@ Command Line Examples:
 
 - Simple query:<BR>
    ./src/dnsquery -d8.8.8.8 -sgoogle.it<BR>
-   216.58.205.195<BR><BR>
+   216.58.205.195<BR>
 
 - Simple query with length:<BR>
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -l<BR>
   Response Length: 43<BR>
-  216.58.205.195<BR><BR>
+  216.58.205.195<BR>
 
 - Decode the previous file:<BR>
-  ./src/dtmf -t./xxx  -o./dtmf.bintest.again<BR><BR>
+  ./src/dtmf -t./xxx  -o./dtmf.bintest.again<BR>
 
 - "Ping" mode:<BR>
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
