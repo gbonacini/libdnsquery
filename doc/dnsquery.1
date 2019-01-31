@@ -1,0 +1,42 @@
+.TH DNSQUERY 1 "OCTOBER 2018" Linux "User Manuals"
+.SH NAME
+dnsquery \- a command line utility to interrogare DNSs, based on libdnsquery.
+.SH SYNOPSIS
+.B  dnsquery [ -d dns_address ] [-s site_name ] 
+.BR [-t qtype] [-f]
+.BR [-l] [-A | -a type | -u type] [-T secs] 
+.BR | [-h] | [-V] 
+
+.SH DESCRIPTION
+dnsquery is a tool to send query to DNSs born to test libdnsquery and released as part of its distribution package. A basic use involves the -d flag, the DNS' address and -s, the name to resolve.
+It offer features common to other standard command line tools and some other interesting features. The -t flag can dump the received packet, this permits to avoid the use of a sniffer running in privileged mode ( mode "dump"). Using the parameter "ping" with -t it's possible to sent continuosly UDP queries to the DNS, obtaining the response time and the missing answers. <TODO> info. The -t parameters mail and locate set a quesry to obain the MX records and the localization record (LOC) when available.
+As default, only the last record will be printed on the screen, to print all the records, include -A, to print all the responses of a spcecific type add -a, to print a record of a specific type use -u. To add a specific timeout, -T is available. You can also obtain the lenght of the response with -l. dnsquery, as standard, will use UDP packets but, adding -f, a TCP connection wil be employed for the query. The flags -V print the version of this program, -h will print a syntax summary.
+.SH \OPTIONS
+.IP -d DNS_address                                         
+Specify the DNS to interrogate.
+.IP -s site_name 
+Specify a name of a site to resolve (i.e. www.wikipedia.org).
+.IP -t query_type.                                                  
+Supported types: standard(default), dump, ping, info, mail, locate                                
+.IP -A 
+Print all responses.                                         
+.IP -a response_type. 
+Print all responses of a given type. Supported types: a, aaaa, ns, cname, soa, wks, ptr, txt, loc, srv 
+.IP -u response_type. 
+Print a single response of a given type (see -a).                                    
+.IP -T secs
+Timeout to <secs> seconds.                         
+.IP -l 
+Length of the response message.                                       
+.IP -f 
+Force tcp query.                                             
+.IP -h 
+Help message.                                     
+.IP -V 
+Version of this program.                                         
+.SH BUGS
+This program is a betaversion, please report any bug.
+.SH AUTHOR
+Gabriele Bonacini <gabriele.bonacini@protonmail.com>
+.SH "SEE ALSO"
+.BR DNSQUERY(1)
