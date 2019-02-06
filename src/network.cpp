@@ -160,6 +160,10 @@ namespace networkutils{
 	            close(fd); 
                 fd  =  -1;
             }
+
+            if(alarmOn)
+                throw string("Timeout.");
+
             throw string("SocketUdp::sendMsg: can't send the query: ").append(strerror(errno));
         }
 
@@ -176,6 +180,10 @@ namespace networkutils{
                    fd  =  -1;
                 }
             }
+
+            if(alarmOn)
+                throw string("Timeout.");
+
             throw string("SocketUdp::sendMsg: can't read query response: ").append(strerror(errno));
         }
         

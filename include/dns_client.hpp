@@ -183,7 +183,8 @@ namespace dnsclient {
     using EnumerationRanges   =  std::array<std::string, dnsclient::DNS_ENUM_RANGES>;
     using CmdLineInterpMap    =  std::map<std::string, std::function<int(void)>>;
 
-    enum  RR_TYPES            { RR_TYPES_A=1,        RR_TYPES_NS=2, 
+    enum  RR_TYPES            { RR_TYPES_NULL=0,
+                                RR_TYPES_A=1,        RR_TYPES_NS=2, 
                                 RR_TYPES_CNAME=5,    RR_TYPES_SOA=6,
                                 RR_TYPES_WKS=11,     RR_TYPES_PTR=12,
                                 RR_TYPES_MX=15,      RR_TYPES_TXT=16,

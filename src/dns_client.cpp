@@ -535,7 +535,20 @@ namespace dnsclient{
     void  DnsBase::extractResponse(size_t mainIdx) anyexcept{
         try{
             size_t  respNum  { 1 },
-                    respsTot { getResponsesNo() + getRRAuthNo() }; 
+                    respsTot { getResponsesNo() + getRRAuthNo() },
+                    respAdd  { getRRAddNo() }; 
+
+            if( respsTot == 0){
+                if( respAdd > 0){
+                    const string nullrsp { "Only additional RR provided" };
+                    parsedResponse.push_back(make_tuple(string("rr_add_only"), RR_TYPES_NULL, 0, 0, nullrsp.size(), nullrsp));
+                }else{
+                    const string nullrsp { "No RR provided" };
+                    parsedResponse.push_back(make_tuple(string("no_rr"), RR_TYPES_NULL, 0, 0, nullrsp.size(), nullrsp));
+                }
+                responseTypeIdx.emplace(RR_TYPES_NULL, vector<size_t>{parsedResponse.size()-1});
+            }
+
             for(size_t blkIdx{mainIdx}; 
                 blkIdx < safeSizeT(socketptr->getRecvLen()) && respNum <= respsTot; 
                 ++respNum)
