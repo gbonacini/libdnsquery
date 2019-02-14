@@ -754,6 +754,10 @@ namespace dnsclient{
 
            blkIdx = extractTextFromResponse(blkIdx, soaLookup);
            blkIdx = extractTextFromResponse(blkIdx, mailRef);
+
+           if((blkIdx + ( 5 * sizeof(uint32_t)) -1 ) >= safeSizeT(socketptr->getRecvLen()))
+               throw  string("DnsClient::extractSoaTextFromResponse: Invalid Index: ").append(to_string(blkIdx + 1));
+
            uint32_t  serial  {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
            blkIdx += sizeof(uint32_t);
            uint32_t  refresh {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };

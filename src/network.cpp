@@ -422,7 +422,7 @@ namespace networkutils{
 
     SocketUdpTraceroute::SocketUdpTraceroute(ServerId hst)
         :  SocketUdpConnected{hst}, ttl{1},          icmpFd{-1},         
-           maxTtl{20},              port{DNS_PORT},  maxPort{65000},
+           maxTtl{200},              port{DNS_PORT},  maxPort{65000}, //TODO: conf
            buffer{},                remoteAddr{}
     {
         setCloseOnError(false);
