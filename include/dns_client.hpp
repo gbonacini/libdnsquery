@@ -25,35 +25,33 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <readline/readline.h>
-#include <readline/history.h>
+#ifdef OFFENSIVE_REL
+    #include <readline/readline.h>
+    #include <readline/history.h>
+#endif
 
-#include <iostream>
 #include <fstream>
 #include <array>
 #include <vector>
 #include <string>
 #include <sstream>
-#include <iomanip>
 #include <cstdint>
 #include <tuple>
 #include <functional>
-#include <regex>
 #include <memory>
-#include <utility>
-#include <atomic>
-#include <algorithm>
-#include <iterator>
+#include <regex>
 
 #include <anyexcept.hpp>
 #include <trace.hpp>
 #include <network.hpp>
 
 #ifdef LINUX_OS
-#include <capabilities.hpp>
+    #include <atomic>
+    #include <capabilities.hpp>
 #endif
 
 #include <rng_reader.hpp>
+
 extern template class rngreader::RngReader<std::vector<uint8_t>>;
 
 namespace dnsclient {
@@ -202,11 +200,25 @@ namespace dnsclient {
     using QTypeDescToClass    =  std::map<std::string, QUERY_TYPE>;
     using QTypeToDescript     =  std::map<QUERY_TYPE, std::string>;
 
+    class BitMaskHdlr{
+        public:
+           template<typename U>
+           static void              setMask(U mask, U& dest)                                      noexcept;
+           template<typename U>
+           static void              unsetMask(U mask,   U& dest)                                  noexcept;
+           template<typename U>
+           static void              invertMask(U mask,   U& dest)                                 noexcept;
+           template<typename U>
+           static bool              checkMask(const U mask, const U dest)                         noexcept;
+           template<typename U>
+           static U                 getMaskValue(const U mask, const U orig)                      noexcept;
+    };
+
     class DnsBase{
         public:
           DnsBase(void);
 
-          void              sendQuery(bool assemble=true)                                       anyexcept;
+          void              sendQuery(bool assemble=true)                                        anyexcept;
           bool              isTruncated(void)                                           const    noexcept;
           void              setForceTcp(bool tcp=true)                                           noexcept;
           void              setSite(SiteName site)                                               anyexcept;
@@ -247,16 +259,6 @@ namespace dnsclient {
            ParsedResponse           parsedResponse;
            ResponseTypeIdx          responseTypeIdx;
 
-           template<typename U>
-           void              setMask(U mask, U& dest)                                            noexcept;
-           template<typename U>
-           void              unsetMask(U mask,   U& dest)                                        noexcept;
-           template<typename U>
-           void              invertMask(U mask,   U& dest)                                       noexcept;
-           template<typename U>
-           bool              checkMask(U mask, U dest)                                    const  noexcept;
-           template<typename U>
-           U                 getMaskValue(U mask, U orig)                                 const  noexcept;
 
            void              setTranId(void)                                                     anyexcept;
 
@@ -333,19 +335,24 @@ namespace dnsclient {
            RRToStringpMap           rRToStringpMap;
            StringToRRMap            stringToRRMap;
 
+        protected:
+
            void              assembleQuery(bool addLen=false, 
                                            QUERY_TYPE qtype=QUERY_TYPE::STD_QUERY)               anyexcept;
     };
 
-    using HeaderGetterMap     =  std::map<std::string, std::function<std::string(void)>>;
-    using HeaderSetParams     =  std::tuple<size_t, uint8_t, uint8_t>;
-    enum  HeadSetterMapIdx    { FILLED, PAR1, PAR2 };
-    using HeaderSettersMap    =  std::map<std::string, std::function<bool(HeaderSetParams)>>;
-    using Params              =  std::vector<std::string>;
-    enum  DNSSHELLCONST       { MAXPARAMS=4 };
-    enum  SHUTSTAT            { SHACT, SHDEACT };
-    using Stat                =  struct stat;
-    using MalformedHeaderFMap =  std::map<std::string, std::function<void(void)>>;
+    class DnsTraceroute : public DnsClient {
+          void              sendQuery(bool assemble=true)                                        anyexcept = delete;
+          bool              isTruncated(void)                                           const    noexcept  = delete;
+          void              setForceTcp(bool tcp=true)                                           noexcept  = delete;
+
+        public:
+           explicit         DnsTraceroute(std::string dns, std::string site="");
+           void             loop(void)                                                           anyexcept;
+        
+        private:
+           networkutils::SocketUdpTraceroute  socketUdpTraceroute;
+    };
 
     #ifdef OFFENSIVE_REL
         #include <dns_client_shell.hpp>

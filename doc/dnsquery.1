@@ -4,6 +4,7 @@ dnsquery \- a command line utility to interrogare DNSs, based on libdnsquery.
 .SH SYNOPSIS
 .B  dnsquery [ -d dns_address ] [-s site_name ] 
 .BR [-t qtype] [-f]
+.BR [-X] 
 .BR [-l] [-A | -a type | -u type] [-T secs] 
 .BR | [-h] | [-V] 
 
@@ -11,6 +12,7 @@ dnsquery \- a command line utility to interrogare DNSs, based on libdnsquery.
 dnsquery is a tool to send query to DNSs born to test libdnsquery and released as part of its distribution package. A basic use involves the -d flag, the DNS' address and -s, the name to resolve.
 It offer features common to other standard command line tools and some other interesting features. The -t flag can dump the received packet, this permits to avoid the use of a sniffer running in privileged mode ( mode "dump"). Using the parameter "ping" with -t it's possible to sent continuosly UDP queries to the DNS, obtaining the response time and the missing answers. <TODO> info. The -t parameters mail and locate set a quesry to obain the MX records and the localization record (LOC) when available.
 As default, only the last record will be printed on the screen, to print all the records, include -A, to print all the responses of a spcecific type add -a, to print a record of a specific type use -u. To add a specific timeout, -T is available. You can also obtain the lenght of the response with -l. dnsquery, as standard, will use UDP packets but, adding -f, a TCP connection wil be employed for the query. The flags -V print the version of this program, -h will print a syntax summary.
+The "traceroute" mode ( -X) permits to trace the answer sending requests with insreasing ttl (starting from 2 ). This feature, using icmp sockets, requires privileges: use it with sudo. In some virtualized environment ICMP error messages are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.
 .SH \OPTIONS
 .IP -d DNS_address                                         
 Specify the DNS to interrogate.
@@ -30,6 +32,8 @@ Timeout to <secs> seconds.
 Length of the response message.                                       
 .IP -f 
 Force tcp query.                                             
+.IP -X 
+"Traceroute" mode. A sequence of packet with incremental ttl will be sent, to trace the answer's route, check DNS hijacking activities and troubleshooting.
 .IP -h 
 Help message.                                     
 .IP -V 

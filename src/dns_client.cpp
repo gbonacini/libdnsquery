@@ -17,6 +17,13 @@
 // -----------------------------------------------------------------
 
 #include <dns_client.hpp>
+
+#include <iostream>
+#include <iomanip>
+#include <utility>
+#include <algorithm>
+#include <iterator>
+
 #include <safeconversion.hpp>
 
 #ifdef OFFENSIVE_REL
@@ -61,12 +68,38 @@ namespace dnsclient{
 
     using networkutils::SocketCreator;
     using networkutils::SocketTypes;
+    using networkutils::SocketUdpTraceroute;
 
     using safeconv::safeSizeT;
     using safeconv::safeLongT;
     using safeconv::safeUint8T;
 
     using stringutils::trace;
+
+    template<typename U>
+    void  BitMaskHdlr::setMask(U mask, U& dest) noexcept{
+        dest |= mask;
+    }
+
+    template<typename U>
+    void  BitMaskHdlr::unsetMask(U mask, U& dest) noexcept{
+        dest &= ~mask;
+    }
+
+    template<typename U>
+    void  BitMaskHdlr::invertMask(U mask, U& dest) noexcept{
+        dest ^= mask;
+    }
+
+    template<typename U>
+    bool  BitMaskHdlr::checkMask(const U mask, const U dest) noexcept{
+        return dest & mask;
+    }
+
+    template<typename U>
+    U  BitMaskHdlr::getMaskValue(const U mask, const U orig)  noexcept{
+          return mask & orig ;
+    }
 
     DnsBase::DnsBase(void)
         :    queryTypeDescrToClass{ make_pair("std",          QUERY_TYPE::STD_QUERY),
@@ -232,33 +265,8 @@ namespace dnsclient{
         }
     }
 
-    template<typename U>
-    void  DnsBase::setMask(U mask, U& dest) noexcept{
-        dest |= mask;
-    }
-
-    template<typename U>
-    void  DnsBase::unsetMask(U mask, U& dest) noexcept{
-        dest &= ~mask;
-    }
-
-    template<typename U>
-    void  DnsBase::invertMask(U mask, U& dest) noexcept{
-        dest ^= mask;
-    }
-
-    template<typename U>
-    bool  DnsBase::checkMask(U mask, U dest) const noexcept{
-        return dest & mask;
-    }
-
-    template<typename U>
-    U  DnsBase::getMaskValue(U mask, U orig)  const  noexcept{
-          return mask & orig ;
-    }
-
     bool  DnsBase::isTruncated(void) const noexcept {
-         return checkMask(DNS_TC, rsp.at(DNS_TC_IDX));
+         return BitMaskHdlr::checkMask(DNS_TC, rsp.at(DNS_TC_IDX));
     }
 
     void   DnsBase::resetHeader(void)  anyexcept{
@@ -320,9 +328,9 @@ namespace dnsclient{
 
     bool  DnsBase::checkPtr(size_t idx, uint16_t& dest) anyexcept{
         try{
-            if(checkMask(DNS_PTRS, rsp.at(idx))){
+            if(BitMaskHdlr::checkMask(DNS_PTRS, rsp.at(idx))){
                 dest  =  ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
-                unsetMask(DNS_PTRS_U16, dest);
+                BitMaskHdlr::unsetMask(DNS_PTRS_U16, dest);
                 return true;
             }else{
                 dest  =  0;
@@ -738,13 +746,28 @@ namespace dnsclient{
        }
     }
 
-    void  DnsBase::extractSoaTextFromResponse(size_t txtIdx, string& result)  anyexcept{
+    void  DnsBase::extractSoaTextFromResponse(size_t blkIdx, string& result)  anyexcept{
        try{
            stringstream  sstr;
-           string        reverseLookup;
-           extractTextFromResponse(txtIdx, reverseLookup);
+           string        soaLookup,
+                         mailRef;
 
-           sstr << reverseLookup << ";";
+           blkIdx = extractTextFromResponse(blkIdx, soaLookup);
+           blkIdx = extractTextFromResponse(blkIdx, mailRef);
+           uint32_t  serial  {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
+           blkIdx += sizeof(uint32_t);
+           uint32_t  refresh {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
+           blkIdx += sizeof(uint32_t);
+           uint32_t  retry   {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
+           blkIdx += sizeof(uint32_t);
+           uint32_t  expire  {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
+           blkIdx += sizeof(uint32_t);
+           uint32_t  minimum  {  ntohl(*(reinterpret_cast<const uint32_t*>(rsp.data() + blkIdx))) };
+           blkIdx += sizeof(uint32_t);
+
+           sstr << soaLookup << ";" << mailRef << ";" << serial  << ";" 
+                << refresh   << ";" << retry   << ";" << expire  << ";"
+                << minimum   << ";";
 
            result = sstr.str();
        }catch(const out_of_range& err){
@@ -926,9 +949,9 @@ namespace dnsclient{
 
     void  DnsClient::setRecursionDes(bool rec) noexcept{
         if(rec)
-            setMask(DNS_RD, queryHeader.at(DNS_RD_IDX));
+            BitMaskHdlr::setMask(DNS_RD, queryHeader.at(DNS_RD_IDX));
         else
-            unsetMask(DNS_RD, queryHeader.at(DNS_RD_IDX));
+            BitMaskHdlr::unsetMask(DNS_RD, queryHeader.at(DNS_RD_IDX));
     }
 
     void  DnsClient::setTimeoutSecs(time_t tou) noexcept{
@@ -976,7 +999,7 @@ namespace dnsclient{
     }
 
     uint8_t DnsClient::getReturnCode(void)  const noexcept{
-        return getMaskValue(DNS_RET.back(), rsp[DNS_RCODE_IDX]);
+        return BitMaskHdlr::getMaskValue(DNS_RET.back(), rsp[DNS_RCODE_IDX]);
     }
 
     double  DnsClient::getElapsedTime(void) const noexcept{
@@ -1089,6 +1112,22 @@ namespace dnsclient{
         }
 
         return group4;
+    }
+
+    DnsTraceroute::DnsTraceroute(string dns, string site)
+        :     DnsClient(dns, site), socketUdpTraceroute{dns}
+    {}
+
+    void DnsTraceroute::loop(void) anyexcept  {
+        try{
+            assembleQuery(false, activeType);
+        }catch(const string& err){
+            throw string("DnsTraceroute::loop: can't assemble query buffer: ").append(err);
+        }
+        setTranId();
+
+        socketUdpTraceroute.sendMsg(queryAssembl, rsp);
+
     }
 
     #ifdef OFFENSIVE_REL

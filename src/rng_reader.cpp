@@ -1,6 +1,9 @@
 #include <rng_reader.hpp>
 #include <safeconversion.hpp>
 
+#include <cerrno>
+#include <cstring>
+
 namespace rngreader{
 
     using std::string;

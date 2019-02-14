@@ -26,8 +26,6 @@
 
 #include <string>
 #include <cstdint>
-#include <cstring>
-#include <cerrno>
 
 #include <anyexcept.hpp>
 

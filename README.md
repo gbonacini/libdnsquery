@@ -57,8 +57,11 @@ Command Line Examples:
   Response Length: 43<BR>
   216.58.205.195<BR>
 
-- Decode the previous file:<BR>
-  ./src/dtmf -t./xxx  -o./dtmf.bintest.again<BR>
+- Request a specific type of RR from the result:<BR>
+  ./src/dnsquery -d1.1.1.1 -sgmail.com -aaaaa<BR>
+  empty response<BR>
+<BR>
+  If no answer of the requeste type is available, the string "empty response" will be the result.
 
 - "Ping" mode:<BR>
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
@@ -66,6 +69,28 @@ Command Line Examples:
   43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms<BR>
+
+- "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
+  are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
+  sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X<BR>
+  ttl: 2 ... omissis ... <BR>
+  ttl: 3 ... omissis ... <BR>
+  ttl: 4 ... omissis ... <BR>
+  ttl: 5 ... omissis ... <BR>
+  ttl: 6 ... omissis ... <BR>
+  ttl: 7 ... omissis ... <BR>
+  ttl: 8 ... omissis ... <BR>
+  ttl: 9 ... omissis ... <BR>
+  ttl: 10 from: 	93.57.68.221	93.57.68.221	93.57.68.221<BR>
+  ttl: 11 from: 	193.201.28.33	193.201.28.33	193.201.28.33<BR>
+  ttl: 12 from: 	1.1.1.1	(DNS answer)<BR>
+<BR>
+  Dump:<BR>
+<BR>
+  00000:  d4 07 81 80 00 01 00 01 00 00 00 00 03 77 77 77  .............www<BR>
+  00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....<BR>
+  00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....<BR>
+  00048:  e4                       <BR>
 
 - Dump mode:
 

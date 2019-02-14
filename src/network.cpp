@@ -1,4 +1,13 @@
 #include <network.hpp>
+
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+
 #include <safeconversion.hpp>
 
 namespace networkutils{
@@ -69,6 +78,10 @@ namespace networkutils{
                           make_pair(SocketTypes::TcpSocketVerbose,   
                                     [&]() -> unique_ptr<Socket>{ auto sckt {  make_unique<SocketTcpVerbose>(servername) }; 
                                                                  sckt->setTimeoutSecs(timeoutSecs);
+                                                                 return sckt; }),
+                          make_pair(SocketTypes::UdpConnectedSocket,   
+                                    [&]() -> unique_ptr<Socket>{ auto sckt {  make_unique<SocketUdpConnected>(servername) }; 
+                                                                 sckt->setTimeoutSecs(timeoutSecs);
                                                                  return sckt; })
                        }
     {}
@@ -129,7 +142,7 @@ namespace networkutils{
          : Socket{hst}, sv{}, closeOnError{true}
     {
         sv.sin_family       = AF_INET;
-        sv.sin_port         = htons(DNS_PORT);
+        sv.sin_port         = htons(DNS_PORT); 
         sv.sin_addr.s_addr  = inet_addr(serverid.c_str());
 
         fd    =  socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -189,12 +202,76 @@ namespace networkutils{
         
     }
 
+    SocketUdpConnected::SocketUdpConnected(ServerId hst)
+         : Socket{hst}, sv{}, closeOnError{true}
+    {
+        sv.sin_family       = AF_INET;
+        sv.sin_port         = htons(DNS_PORT); 
+        sv.sin_addr.s_addr  = inet_addr(serverid.c_str());
+
+        fd    =  socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if(fd == -1)  
+            throw string("SocketUdpConnected: can't create socket.").append(strerror(errno));
+
+        if(connect(fd, reinterpret_cast<Sockaddr*>(&sv), sizeof(sv)) < 0) 
+            throw string("\n Error : UDP Socket Connect Failed \n"); 
+
+
+        int reuse { 1 };
+        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+            throw string("SocketUdpConnected: can't configure socket SO_REUSEADDR.").append(strerror(errno));
+    }
+
+    void SocketUdpConnected::setCloseOnError(bool onOff) noexcept{
+          closeOnError  = onOff;
+    }
+
+    SocketUdpConnected::~SocketUdpConnected(void){
+        if(fd != -1)     
+            close(fd);
+    }
+
+    void SocketUdpConnected::sendMsg(const Buffer& query, Response& response) anyexcept {
+        alarm(static_cast<unsigned int>(timeout_sec));
+        ssize_t   ret   {  ::send(fd, query.data(), query.size(), 0) };                            
+        alarm(0);
+        if(ret == -1 ){ 
+            if(closeOnError){ 
+	            close(fd); 
+                fd  =  -1;
+            }
+
+            if(alarmOn)
+                throw string("Timeout.");
+            throw string("SocketUdpConnected::sendMsg: can't send the query: ").append(strerror(errno));
+        }
+
+        alarm(static_cast<unsigned int>(timeout_sec));
+        rcvResp     =  ::recv(fd, response.data(), response.size(), 0); 
+        alarm(0);
+        if(rcvResp == -1){ 
+            if(closeOnError){ 
+                if(Socket::alarmOn){
+                    wrnMsg   =  "SocketUdpConnected::sendMsg: time exceed."; 
+                    timeExc  =  true;
+                }else{
+	               close(fd);  
+                   fd  =  -1;
+                }
+            }
+
+            if(alarmOn)
+                throw string("Timeout.");
+            throw string("SocketUdpConnected::sendMsg: can't read query response: ").append(strerror(errno));
+        }
+    }
+
     SocketTcp::SocketTcp(ServerId hst)
          : Socket{hst}, sv{},
            tcpBuffer(DNS_RESPONSE_TCP_SIZE, 0)
     {
         sv.sin_family       = AF_INET;
-        sv.sin_port         = htons(DNS_PORT);
+        sv.sin_port         = htons(DNS_PORT); 
         sv.sin_addr.s_addr  = inet_addr(serverid.c_str());
 
         fd    =  socket(AF_INET, SOCK_STREAM, 0);
@@ -343,9 +420,114 @@ namespace networkutils{
        }
     } 
 
+    SocketUdpTraceroute::SocketUdpTraceroute(ServerId hst)
+        :  SocketUdpConnected{hst}, ttl{1},          icmpFd{-1},         
+           maxTtl{20},              port{DNS_PORT},  maxPort{65000},
+           buffer{},                remoteAddr{}
+    {
+        setCloseOnError(false);
+        sv.sin_port         = htons(port);
+
+        setTimeoutSecs(DNS_DEFAULT_TIMEOUT); 
+
+        if ((icmpFd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) 
+            throw string("SocketUdpTraceroute::SocketUdpTraceroute: Can't open icmp socket.");
+    }
+
+    SocketUdpTraceroute::~SocketUdpTraceroute(void){
+        if(icmpFd != -1) close(icmpFd);
+    }
+
+    void SocketUdpTraceroute::setTtl(int newTtl) noexcept{
+         ttl = newTtl;
+    }
+
+    void SocketUdpTraceroute::applyTtl(void)  noexcept{
+         ttl++;
+         setsockopt(fd, 0, IP_TTL, &ttl, sizeof(ttl));
+    }                                       
+
+    void SocketUdpTraceroute::setMaxTtl(uint8_t newMax) noexcept{
+         maxTtl  =  newMax;
+    }
+
+    void SocketUdpTraceroute::setPort(uint16_t newPort) noexcept{
+         port    =   newPort;
+    }
+
+    void SocketUdpTraceroute::setMaxPort(uint16_t newMaxPort) noexcept{
+         maxPort  =  newMaxPort ;
+    }
+
+    void SocketUdpTraceroute::sendMsg(const Buffer& query, Response& response) anyexcept {
+        bool reachDest  { false };
+        while(!signalExit && !reachDest){
+            applyTtl();
+            if( ttl > maxTtl)
+               break;
+
+            cerr << "ttl: " << ttl << " from: ";
+
+            for(size_t i=0; i<3; ++i){
+                alarm(static_cast<unsigned int>(timeout_sec));
+                start             =   system_clock::now();
+                ssize_t   ret   {  ::send(fd, query.data(), query.size(), 0) };                            
+                alarm(0);
+                if(ret == -1 ){ 
+                    if(closeOnError){ 
+	                   close(fd); 
+                       fd  =  -1;
+                    }
+        
+                    if(alarmOn)
+                        throw string("Timeout. ");
+                    throw string("SocketUdpConnected::sendMsg: can't send the query: ").append(strerror(errno));
+                }
+
+                string errMsg("ReadMsg timeout. ");
+                socklen_t                len=sizeof(Sockaddr);
+                alarm(static_cast<unsigned int>(timeout_sec));
+                long int retIcmp   { ::recvfrom(icmpFd, buffer.data(), buffer.size(), 0, &remoteAddr, &len) };
+                if(retIcmp == -1 ){ 
+                    wrnMsg  =  string("Icmp socket error: ").append(strerror(errno));
+                    cerr << "\t     *     ";
+                } else {
+                    end               =   system_clock::now();
+                    elapsed_seconds   =   end - start;
+                    // trace("ICMP received:", buffer.data(), static_cast<size_t>(retIcmp), 0, 12);
+                    cerr <<  "\t" << inet_ntoa((reinterpret_cast<sockaddr_in*>(&remoteAddr))->sin_addr)
+                         <<  "\t("  << elapsed_seconds.count() << "s)";
+                }
+                alarm(0);
+
+                if(retIcmp == -1 ){ 
+                    alarm(static_cast<unsigned int>(timeout_sec));
+                    rcvResp     =  ::recvfrom(fd, response.data(), response.size(), 0, &remoteAddr, &len);
+                    alarm(0);
+                    if(rcvResp == -1){ 
+                        if(Socket::alarmOn){
+                            wrnMsg   =  "SocketUdpConnected::sendMsg: response time exceed."; 
+                            timeExc  =  true;
+                        }else{    
+                                cerr << "Received: " << string(strerror(errno)) << endl;
+                        }
+                    }else{
+                        reachDest  =  true;
+                        cerr <<  "\t" << inet_ntoa((reinterpret_cast<sockaddr_in*>(&remoteAddr))->sin_addr) << "\t(DNS answer)\n";
+                        trace("\nDump:", response.data(), static_cast<size_t>(rcvResp), 0, 12);
+                        break;
+                    }
+                }
+            }
+            cerr << endl;
+        }
+    }
+
     SocketTcpVerbose::SocketTcpVerbose(ServerId hst)
         : SocketTcp{hst}
-    {}
+    {
+        setTimeoutSecs(DNS_DEFAULT_TIMEOUT); 
+    }
 
     void SocketTcpVerbose::sendMsg(const Buffer& query, Response& response)  anyexcept{
         start            =   system_clock::now();

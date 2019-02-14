@@ -19,16 +19,10 @@
 #ifndef  NETWORK_DNS_CLIENT_BG_HPP
 #define  NETWORK_DNS_CLIENT_BG_HPP
 
-#include <unistd.h>
-#include <signal.h>
-#include <arpa/inet.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <signal.h>
 
-#include <cerrno>
 #include <cstdint>
-#include <cstdio>
-#include <cstring>
 #include <string>
 #include <vector>
 #include <array>
@@ -41,10 +35,18 @@
 #include <anyexcept.hpp>
 #include <trace.hpp>
 
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+
+
 namespace networkutils{
 
-    enum  NET_CONSTS          {  DNS_RESPONSE_SIZE     = 512,    DNS_PORT = 53,
-                                 DNS_RESPONSE_TCP_SIZE = 40960 };
+    enum  NET_CONSTS          {  DNS_RESPONSE_SIZE     = 512,    
+                                 DNS_BUFF_SIZE         = 548,
+                                 DNS_PORT              = 53,
+                                 DNS_TEST_PORT         = 33434,
+                                 DNS_RESPONSE_TCP_SIZE = 40960,
+                                 DNS_DEFAULT_TIMEOUT   = 6};
 
     using SockaddrIn          =  struct sockaddr_in;
     using Sockaddr            =  struct sockaddr;
@@ -87,9 +89,10 @@ namespace networkutils{
             explicit           Socket(ServerId hst);
     };
 
-    enum class SocketTypes    {  UdpSocket,   UdpSocketVerbose,  UdpSocketPing,
+    enum class SocketTypes    {  UdpSocket,         UdpSocketVerbose,  UdpSocketPing,
+                                 UdpConnectedSocket,
                                  UdpSocketSp, 
-                                 TcpSocket,   TcpSocketVerbose,
+                                 TcpSocket,         TcpSocketVerbose
                               };
 
     using SocketCreatorFx     =  std::function<std::unique_ptr<Socket>(void)>;
@@ -132,6 +135,21 @@ namespace networkutils{
             bool             closeOnError;
     };
 
+    class SocketUdpConnected : public Socket{
+        public:
+            explicit SocketUdpConnected(ServerId hst);
+            ~SocketUdpConnected(void)                                              override;
+
+            void sendMsg(const Buffer& query,
+                         Response& response)                             anyexcept override;
+
+            void setCloseOnError(bool)                                   noexcept;
+
+        protected:
+            SockaddrIn       sv;
+            bool             closeOnError;
+    };
+
     #ifdef OFFENSIVE_REL
     #include <networkraw.hpp>
     #endif
@@ -163,6 +181,46 @@ namespace networkutils{
             void sendMsg(const Buffer& query,
                          Response& response)                             anyexcept override final;
     };
+
+    using Msghdr=struct msghdr;
+    using IcmpBuff=std::array<uint8_t, DNS_BUFF_SIZE>;
+
+    using SockaddrStorage=struct sockaddr_storage;
+    using Iovec=struct iovec;
+    using Cmsghdr=struct cmsghdr;
+    using Icmphdr=struct icmphdr;
+    using SockExtendedErr=struct sock_extended_err;
+   
+    enum ICMP_ERR_CODES { ICMP_TYPE_DESTINATION_UNREACHABLE=3,
+                          ICMP_CODE_PORT_UNREACHABLE=3,
+                          ICMP_TYPE_TIME_EXCEEDED=11,
+                          ICMP_CODE_TTL_EXCEEDED_IN_TRANSIT=0
+    };
+
+    class SocketUdpTraceroute : public SocketUdpConnected{
+        public:
+            explicit SocketUdpTraceroute(ServerId hst);
+            ~SocketUdpTraceroute(void)                                             override;
+
+            void sendMsg(const Buffer& query,
+                         Response& response)                             anyexcept override final;
+
+            void setTtl(int newTtl)                                      noexcept;
+            void setMaxTtl(uint8_t newMax)                               noexcept;
+            void setPort(uint16_t newPort)                               noexcept;
+            void setMaxPort(uint16_t newMaxPort)                         noexcept;
+
+        private:
+            int                                  ttl,
+                                                 icmpFd;
+            uint8_t                              maxTtl;
+            uint16_t                             port,
+                                                 maxPort;
+            IcmpBuff                             buffer;
+            Sockaddr                             remoteAddr;
+
+            void          applyTtl(void)                                 noexcept;
+    }; 
 
     class SocketTcpVerbose : public SocketTcp {
         public:

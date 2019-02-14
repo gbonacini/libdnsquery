@@ -24,7 +24,7 @@ using namespace parcmdline;
 
 int main(int argc, char** argv){
 
-    constexpr char         flags[]    { "ie:a:u:Ad:s:S:T:lfht:Vr" };
+    constexpr char         flags[]    { "ie:a:u:Ad:s:S:T:lfht:VrX" };
     constexpr time_t       DEF_TIMEO  { 3   },
                            MAX_TIMEO  { 120 };
     int                    ret        { 0   };
@@ -52,7 +52,7 @@ int main(int argc, char** argv){
                !pcl.isSet('e') && !pcl.isSet('r') && !pcl.isSet('S') &&
                !pcl.isSet('i') && 
            #endif
-           !pcl.isSet('h') && !pcl.isSet('V') )
+           !pcl.isSet('X') && !pcl.isSet('h') && !pcl.isSet('V') )
               paramError(argv[0], "No valid parameter specified");
 
         #ifdef OFFENSIVE_REL
@@ -60,8 +60,7 @@ int main(int argc, char** argv){
                 pcl.isSet('t') || pcl.isSet('f')  || pcl.isSet('S') ||
                 pcl.isSet('l') || pcl.isSet('A')  || pcl.isSet('a') ||
                 pcl.isSet('u') || pcl.isSet('T')  || pcl.isSet('r') ||
-                pcl.isSet('u') || pcl.isSet('T')  || pcl.isSet('r') ||
-                pcl.isSet('h')  || pcl.isSet('V')) )
+                pcl.isSet('h') || pcl.isSet('V')) || pcl.isSet('X'))
                   paramError(argv[1], "-i (interactive node) doesn't require other parameters.");
         #endif
 
@@ -75,6 +74,22 @@ int main(int argc, char** argv){
                 return 0;
             }
         #endif
+
+        if(pcl.isSet('X') && (!pcl.isSet('d') || !pcl.isSet('s') ))
+              paramError(argv[0], "-X  requires -d and -s.");
+
+        if( pcl.isSet('X') && (pcl.isSet('e') || pcl.isSet('t') || 
+            pcl.isSet('f')  || pcl.isSet('S') || pcl.isSet('l') || 
+            pcl.isSet('A')  || pcl.isSet('a') || pcl.isSet('u') || 
+            pcl.isSet('T')  || pcl.isSet('r') || pcl.isSet('h') || 
+            pcl.isSet('i')  || pcl.isSet('V')) )
+              paramError(argv[0], "-X  requires only -d and -s.");
+
+        if(pcl.isSet('X') ){
+            DnsTraceroute dcs(pcl.getValue('d'), pcl.getValue('s'));
+            dcs.loop();
+            return 0;
+        }
 
         size_t filterNoOut { 0 };
         if(pcl.isSet('A'))  filterNoOut++;
@@ -221,12 +236,12 @@ void paramError(const char* progname, const char* err) noexcept{
         #ifdef OFFENSIVE_REL
         << "       "  << progname << " [ -d dns_address ] [-s site_name | -e ranges]      \n"
                                   << " [-t qtype] [-f] [-S fake_sender]                   \n"
-                                  << " [-l] [-A | -a type | -u type] [-T secs] [-r]       \n"     
+                                  << " [-l] [-A | -a type | -u type] [-T secs] [-r] [-X]  \n"     
                                   << " | [-i]                                             \n"     
         #else
         << "       "  << progname << " [ -d dns_address ] [-s site_name ]                 \n"
                                   << " [-t qtype] [-f]                                    \n"
-                                  << " [-l] [-A | -a type | -u type] [-T secs]            \n"     
+                                  << " [-l] [-A | -a type | -u type] [-T secs] [-X]       \n"     
         #endif
         << "       "              << " | [-h] | [-V]                                      \n\n"   
         << "       "  << "-t query type.                                                  \n" 
@@ -239,6 +254,8 @@ void paramError(const char* progname, const char* err) noexcept{
         << "       "  << "-u response type. Print a single response of a given type:      \n" 
         << "       "  << "    Supported types: see -a.                                    \n" 
         << "       "  << "-T secs. Set timeout to <secs> seconds.                         \n" 
+        << "       "  << "-X set trace mode: all the hops will be printed to verify       \n" 
+        << "       "  << "   the responder.                                               \n" 
         << "       "  << "-l print response length.                                       \n"                                     
         << "       "  << "-f force tcp query.                                             \n"                                          
         << "       "  << "-d an address of a DNS.                                         \n"                                       
