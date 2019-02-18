@@ -74,10 +74,11 @@ Command Line Examples:
   43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms<BR>
-```
+  ```
 
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
   are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
+
   ```shell
   sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X
 
@@ -99,4 +100,4 @@ Command Line Examples:
   00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....
   00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....
   00048:  e4                       
-```
+  ```
