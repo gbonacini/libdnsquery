@@ -63,16 +63,22 @@ Command Line Examples:
 <BR>
   If no answer of the requeste type is available, the string "empty response" will be the result.
 
+- Dump mode:
+
+![alt text](pitcs/dump.png "Dump Mode")
+
 - "Ping" mode:<BR>
+  ```
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
   43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms<BR>
+```
 
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
   are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
-  ```bash
+  ```
   sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X
 
   ttl: 2 ... omissis ... 
@@ -93,9 +99,4 @@ Command Line Examples:
   00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....
   00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....
   00048:  e4                       
-
 ```
-
-- Dump mode:
-
-![alt text](pitcs/dump.png "Dump Mode")
