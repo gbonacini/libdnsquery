@@ -76,6 +76,13 @@ namespace dnsclient{
 
     using stringutils::trace;
 
+    extern "C" {
+       void libdnsquery_is_present(void){
+           // To semplify autoconf tests
+           cerr << "libdnsquery is present" << endl;
+       }
+    }
+
     template<typename U>
     void  BitMaskHdlr::setMask(U mask, U& dest) noexcept{
         dest |= mask;

@@ -52,6 +52,10 @@
 
 #include <rng_reader.hpp>
 
+extern "C" {
+  void libdnsquery_is_present(void);
+}
+
 extern template class rngreader::RngReader<std::vector<uint8_t>>;
 
 namespace dnsclient {
