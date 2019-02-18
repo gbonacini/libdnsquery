@@ -1,5 +1,11 @@
-Artemis (0.0.1) any; urgency=low 
+Libdnsquery (0.0.1) any; urgency=low 
 
  * Beta Test
  Initial Version.
  -- Gabriele Bonacini <gabriele.bonacini@protonmail.com> Tue, 27 Nov 2018 12:14:00 -0100 
+
+Libdnsquery (0.0.8) any; urgency=low 
+
+ * Beta Test
+ Added: DNS traceroute.
+ -- Gabriele Bonacini <gabriele.bonacini@protonmail.com> Thu, 14 Feb 2019 12:14:00 -0100 
