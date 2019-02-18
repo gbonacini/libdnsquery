@@ -73,25 +73,26 @@ Command Line Examples:
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
   are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
   ```bash
-  sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X<BR>
-  ttl: 2 ... omissis ... <BR>
-  ttl: 3 ... omissis ... <BR>
-  ttl: 4 ... omissis ... <BR>
-  ttl: 5 ... omissis ... <BR>
-  ttl: 6 ... omissis ... <BR>
-  ttl: 7 ... omissis ... <BR>
-  ttl: 8 ... omissis ... <BR>
-  ttl: 9 ... omissis ... <BR>
-  ttl: 10 from: 	93.57.68.221	93.57.68.221	93.57.68.221<BR>
-  ttl: 11 from: 	193.201.28.33	193.201.28.33	193.201.28.33<BR>
-  ttl: 12 from: 	1.1.1.1	(DNS answer)<BR>
-<BR>
-  Dump:<BR>
-<BR>
-  00000:  d4 07 81 80 00 01 00 01 00 00 00 00 03 77 77 77  .............www<BR>
-  00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....<BR>
-  00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....<BR>
-  00048:  e4                       <BR>
+  sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X
+
+  ttl: 2 ... omissis ... 
+  ttl: 3 ... omissis ... 
+  ttl: 4 ... omissis ... 
+  ttl: 5 ... omissis ... 
+  ttl: 6 ... omissis ... 
+  ttl: 7 ... omissis ... 
+  ttl: 8 ... omissis ... 
+  ttl: 9 ... omissis ... 
+  ttl: 10 from: 	93.57.68.221	93.57.68.221	93.57.68.221
+  ttl: 11 from: 	193.201.28.33	193.201.28.33	193.201.28.33
+  ttl: 12 from: 	1.1.1.1	(DNS answer)
+
+  Dump:
+
+  00000:  d4 07 81 80 00 01 00 01 00 00 00 00 03 77 77 77  .............www
+  00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....
+  00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....
+  00048:  e4                       
 
 ```
 
