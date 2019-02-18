@@ -63,9 +63,9 @@ Command Line Examples:
 <BR>
   If no answer of the requeste type is available, the string "empty response" will be the result.
 
-- Dump mode:
+- Dump mode:<BR>
 
-![alt text](pitcs/dump.png "Dump Mode")
+  ![alt text](pitcs/dump.png "Dump Mode")
 
 - "Ping" mode:<BR>
   ```shell
