@@ -68,7 +68,7 @@ Command Line Examples:
 ![alt text](pitcs/dump.png "Dump Mode")
 
 - "Ping" mode:<BR>
-  ```
+  ```shell
   ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
   43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms<BR>
   43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
@@ -78,7 +78,7 @@ Command Line Examples:
 
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
   are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
-  ```
+  ```shell
   sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X
 
   ttl: 2 ... omissis ... 
