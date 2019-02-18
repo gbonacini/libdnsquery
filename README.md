@@ -72,6 +72,7 @@ Command Line Examples:
 
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
   are filtered when the connection came from a NAT, a workaround cold be to switch in "bridged" mode.):<BR>
+  ```bash
   sudo ./src/dnsquery -d1.1.1.1 -swww.ipv6.net.cn -X<BR>
   ttl: 2 ... omissis ... <BR>
   ttl: 3 ... omissis ... <BR>
@@ -91,6 +92,8 @@ Command Line Examples:
   00016:  04 69 70 76 36 03 6e 65 74 02 63 6e 00 00 01 00  .ipv6.net.cn....<BR>
   00032:  01 c0 0c 00 01 00 01 00 00 02 58 00 04 1b dd 14  ..........X.....<BR>
   00048:  e4                       <BR>
+
+```
 
 - Dump mode:
 
