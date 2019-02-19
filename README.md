@@ -69,11 +69,11 @@ Command Line Examples:
 
 - "Ping" mode:<BR>
   ```shell
-  ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping<BR>
-  43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms<BR>
-  43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms<BR>
-  43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms<BR>
-  43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms<BR>
+  ./src/dnsquery -d8.8.8.8 -sgoogle.it -tping
+  43 bytes from 8.8.8.8 dns_seq=0 time=0.044613 ms
+  43 bytes from 8.8.8.8 dns_seq=1 time=0.016406 ms
+  43 bytes from 8.8.8.8 dns_seq=2 time=0.016617 ms
+  43 bytes from 8.8.8.8 dns_seq=3 time=0.021073 ms
   ```
 
 - "Traceroute mode" (this option only needs privile: use sudo, In some virtualized environment ICMP error messages 
