@@ -54,7 +54,7 @@ Using this link (a Github account is required), it's possible to test this progr
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/gbonacini/libdnsquery)
 
-A Docker environment will be created, the depencies installed and the program compiled.
+A Docker environment will be created, the depencies installed and the program compiled.<BR><BR>
 After that you can test it running a  proper command in the terminal, as this example show:
 
 ![alt text](./screenshoots/dnsping_cloud.png "cmd line example on gitpod")
