@@ -24,7 +24,9 @@ It's tested using this/these distributions of Linux:
 
 using, as compiler, one in this list:
 
-- gcc version 7.3.0 (Ubuntu 7.3.0-27ubuntu1~18.04) 
+- gcc version 7.3.0 (Ubuntu 7.3.0-27ubuntu1~18.04
+
+*On Linux libcap-dev is required.*
 
 
 It's tested using this/these distributions of Os X:
@@ -48,9 +50,14 @@ Installation:
 Try it live:
 ============
 
+Using this link (a Github account is required), it's possible to test this program on Gitpod:
+
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/gbonacini/libdnsquery)
 
+A Docker environment will be created, the depencies installed and the program compiled.
+After that you can test it running a  proper command in the terminal, as this example show:
 
+![alt text](./screenshoots/dnsping_cloud.png "cmd line example on gitpod")
 
 
 Command Line Examples:
