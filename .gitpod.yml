@@ -1,0 +1,2 @@
+tasks:
+- command: ./configure && make && ln -s src/dnsquery dnsquery
