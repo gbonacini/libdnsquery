@@ -6,7 +6,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y libcap2 libcap-ng
     && apt-get clean && rm -rf /var/cache/apt/* && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
 
 #Obtain libcap-dev package
-RUN wget http://ge.archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap-dev_2.25-1.2_amd64.deb -O ./libcap-dev_2.25-1.2_amd64.deb || || echo "*** Error: downloading libcap-dev"
+RUN wget http://ge.archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap-dev_2.25-1.2_amd64.deb -O ./libcap-dev_2.25-1.2_amd64.deb || echo "*** Error: downloading libcap-dev"
 
 #Install libcap-dev
 
