@@ -1,5 +1,4 @@
 image:
   file: ./Dockerfile
 tasks:
-- command: ./configure && make 
-- command: [[ -f ./dnsquery ]] || ln -s src/dnsquery dnsquery
+- command: ./configure && make && ( [[ -f ./dnsquery ]] || ln -s src/dnsquery dnsquery )
