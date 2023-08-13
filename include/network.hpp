@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,8 +16,7 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef  NETWORK_DNS_CLIENT_BG_HPP
-#define  NETWORK_DNS_CLIENT_BG_HPP
+#pragma once
 
 #include <sys/types.h>
 #include <signal.h>
@@ -56,13 +55,14 @@ namespace networkutils{
     using Sigaction           =  struct sigaction;
     using TimePoint           =  std::chrono::time_point<std::chrono::system_clock>;
     using DurationTime        =  std::chrono::duration<double>;
+    using Timeval             =  struct timeval;
 
     class Socket{
         public:
             virtual void        sendMsg(const Buffer& query, 
                                         Response& response)                   anyexcept = 0 ;
 
-            void                setTimeoutSecs(time_t tou)                    noexcept;
+            virtual void        setTimeoutSecs(time_t tou)                    noexcept;
             bool                isTimeout(void)                      const    noexcept;
             const std::string&  getWarningMsg(void)                  const    noexcept;
             double              getElapsedTime(void)                 const    noexcept;
@@ -75,16 +75,16 @@ namespace networkutils{
             ServerId                 serverid;
             socklen_t                len;
             ssize_t                  rcvResp;
-            time_t                   timeout_sec;
-            Sigaction                sigActionAlarm;
-            static std::atomic_bool  alarmOn,
-                                     sigpipeOn;
+            Timeval                  timeout_sec;
+            static std::atomic_bool  sigpipeOn;  
             std::string              wrnMsg;
             bool                     timeExc,
                                      signalExit;
             TimePoint                start,
                                      end;
             DurationTime             elapsed_seconds;
+            fd_set                   sockSet;
+            Sigaction                sigActionPipe;
 
             explicit           Socket(ServerId hst);
     };
@@ -199,16 +199,17 @@ namespace networkutils{
 
     class SocketUdpTraceroute : public SocketUdpConnected{
         public:
-            explicit SocketUdpTraceroute(ServerId hst);
-            ~SocketUdpTraceroute(void)                                             override;
+            explicit     SocketUdpTraceroute(ServerId hst);
+            ~SocketUdpTraceroute(void)                                            override;
 
-            void sendMsg(const Buffer& query,
-                         Response& response)                             anyexcept override final;
+            void          sendMsg(const Buffer& query,
+                                  Response& response)                             anyexcept override final;
 
-            void setTtl(int newTtl)                                      noexcept;
-            void setMaxTtl(uint8_t newMax)                               noexcept;
-            void setPort(uint16_t newPort)                               noexcept;
-            void setMaxPort(uint16_t newMaxPort)                         noexcept;
+            void          setTtl(int newTtl)                                      noexcept;
+            void          setMaxTtl(uint8_t newMax)                               noexcept;
+            void          setPort(uint16_t newPort)                               noexcept;
+            void          setMaxPort(uint16_t newMaxPort)                         noexcept;
+            virtual void  setTimeoutSecs(time_t tou)                              noexcept  override final;
 
         private:
             int                                  ttl,
@@ -218,8 +219,11 @@ namespace networkutils{
                                                  maxPort;
             IcmpBuff                             buffer;
             Sockaddr                             remoteAddr;
+            Sigaction                            sigActionAlarm;
+            time_t                               tout_sec;
+            static std::atomic_bool              alarmOn; 
 
-            void          applyTtl(void)                                 noexcept;
+            void          applyTtl(void)                                          noexcept;
     }; 
 
     class SocketTcpVerbose : public SocketTcp {
@@ -232,4 +236,3 @@ namespace networkutils{
 
 } // End Namespace
 
-#endif

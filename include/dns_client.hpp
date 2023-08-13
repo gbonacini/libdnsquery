@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,8 +16,7 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef DNSCLIENT_BG_HPP
-#define DNSCLIENT_BG_HPP
+#pragma once
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -75,6 +74,7 @@ namespace dnsclient {
     constexpr size_t             DNS_RESP_DATA_TCP_DELTA =  sizeof(uint16_t);
 
     enum DNS_HEADER_IDX { DNS_TRANID_IDX   =  0,
+                          DNS_FLAGS_IDX    =  2,
                           DNS_QR_IDX       =  2,    DNS_OPCODE_IDX  =  2,
                           DNS_AA_IDX       =  2,    DNS_TC_IDX      =  2,
                           DNS_RD_IDX       =  2,    DNS_RA_IDX      =  3,
@@ -206,16 +206,11 @@ namespace dnsclient {
 
     class BitMaskHdlr{
         public:
-           template<typename U>
-           static void              setMask(U mask, U& dest)                                      noexcept;
-           template<typename U>
-           static void              unsetMask(U mask,   U& dest)                                  noexcept;
-           template<typename U>
-           static void              invertMask(U mask,   U& dest)                                 noexcept;
-           template<typename U>
-           static bool              checkMask(const U mask, const U dest)                         noexcept;
-           template<typename U>
-           static U                 getMaskValue(const U mask, const U orig)                      noexcept;
+           static void              setMask(auto mask, auto& dest)                                      noexcept;
+           static void              unsetMask(auto mask,   auto& dest)                                  noexcept;
+           static void              invertMask(auto mask,   auto& dest)                                 noexcept;
+           static bool              checkMask(const auto mask, const auto dest)                         noexcept;
+           static auto              getMaskValue(const auto mask, const auto orig)                      noexcept;
     };
 
     class DnsBase{
@@ -364,4 +359,3 @@ namespace dnsclient {
 
 } // End Namespace
 
-#endif

@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -19,10 +19,10 @@
 #include <parseCmdLine.hpp>
 #include <iostream>
 
-using std::string;
-using std::pair;
-using std::toupper;
-using std::tolower;
+using std::string,
+      std::pair,
+      std::toupper,
+      std::tolower;
 
 namespace parcmdline{
 

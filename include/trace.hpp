@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,8 +16,7 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef  TRACE_DNSCLIENT_BG_HPP
-#define  TRACE_DNSCLIENT_BG_HPP
+#pragma once
 
 #include <cstdint>
 #include <iostream>
@@ -33,14 +32,13 @@
 
 namespace stringutils{
 
-void      trace(std::string header)                                                       noexcept;
-void      trace(std::string header, const std::vector<uint8_t>* buff,
+void      trace(auto header)                                                              noexcept;
+void      trace(auto header, const std::vector<uint8_t>* buff,
                 size_t begin = 0, size_t end = 0, size_t max = 0 )                        noexcept;
-void      trace(std::string header, const std::vector<uint8_t>& buff,
+void      trace(auto header, const std::vector<uint8_t>& buff,
                 size_t begin = 0, size_t end = 0, size_t max = 0 )                        noexcept;
 void      trace(const  char*  header, const uint8_t* buff, const size_t size = 0,
                 size_t begin = 0, size_t end = 0 )                                        noexcept;
 
 } //End Namespace
 
-#endif

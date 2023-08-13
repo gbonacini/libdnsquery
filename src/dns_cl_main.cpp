@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -287,7 +287,7 @@ bool isAnAddr(const string& param) anyexcept{
    }
 }
 
-const dnsclient::EnumerationRanges createEnumerationList(std::string& epar) anyexcept{
+const dnsclient::EnumerationRanges createEnumerationList(string& epar) anyexcept{
    try{
       const regex  addressRangeFilter{"^([0-9]{1,3}([\\-]{1}[0-9]{1,3})*){1}([.]{1}[0-9]{1,3}([\\-]{1}[0-9]{1,3})*){0,3}$"};
 

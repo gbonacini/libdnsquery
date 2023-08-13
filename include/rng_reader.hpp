@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,8 +16,7 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef DNSCLIENRNG_BG_HPP
-#define DNSCLIENRNG_BG_HPP
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,5 +52,3 @@ namespace rngreader{
     };
 
 } // End Namespace
-
-#endif

@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include <safeconversion.hpp>
+#include <Types.hpp>
 
 #ifdef OFFENSIVE_REL
     #ifdef LINUX_OS
@@ -34,47 +34,43 @@
 
 namespace dnsclient{
 
-    using std::vector;
-    using std::string;
-    using std::to_string;
-    using std::stringstream;
-    using std::cerr;
-    using std::cout;
-    using std::endl;
-    using std::getline;
-    using std::chrono::time_point;
-    using std::chrono::system_clock;
-    using std::chrono::duration;
-    using std::out_of_range;
-    using std::function;
-    using std::get;
-    using std::make_tuple;
-    using std::dec;
-    using std::hex;
-    using std::regex;
-    using std::sregex_token_iterator;
-    using std::regex_search;
-    using std::smatch;
-    using std::pair;
-    using std::make_pair;
-    using std::stoul;
-    using std::setfill;
-    using std::setw;
-    using std::ifstream;
-    using std::ofstream;
-    using std::copy;
-    using std::istreambuf_iterator;
-    using std::ios;
-
-    using networkutils::SocketCreator;
-    using networkutils::SocketTypes;
-    using networkutils::SocketUdpTraceroute;
-
-    using safeconv::safeSizeT;
-    using safeconv::safeLongT;
-    using safeconv::safeUint8T;
-
-    using stringutils::trace;
+    using std::vector,
+          std::string,
+          std::to_string,
+          std::stringstream,
+          std::cerr,
+          std::cout,
+          std::endl,
+          std::getline,
+          std::chrono::time_point,
+          std::chrono::system_clock,
+          std::chrono::duration,
+          std::out_of_range,
+          std::function,
+          std::get,
+          std::make_tuple,
+          std::dec,
+          std::hex,
+          std::regex,
+          std::sregex_token_iterator,
+          std::regex_search,
+          std::smatch,
+          std::pair,
+          std::make_pair,
+          std::stoul,
+          std::setfill,
+          std::setw,
+          std::ifstream,
+          std::ofstream,
+          std::copy,
+          std::istreambuf_iterator,
+          std::ios,
+          std::numeric_limits,
+          networkutils::SocketCreator,
+          networkutils::SocketTypes,
+          networkutils::SocketUdpTraceroute,
+          typeutils::safeSizeT,
+          stringutils::trace;
 
     extern "C" {
        void libdnsquery_is_present(void){
@@ -83,28 +79,23 @@ namespace dnsclient{
        }
     }
 
-    template<typename U>
-    void  BitMaskHdlr::setMask(U mask, U& dest) noexcept{
+    void  BitMaskHdlr::setMask(auto mask, auto& dest) noexcept{
         dest |= mask;
     }
 
-    template<typename U>
-    void  BitMaskHdlr::unsetMask(U mask, U& dest) noexcept{
+    void  BitMaskHdlr::unsetMask(auto mask, auto& dest) noexcept{
         dest &= ~mask;
     }
 
-    template<typename U>
-    void  BitMaskHdlr::invertMask(U mask, U& dest) noexcept{
+    void  BitMaskHdlr::invertMask(auto mask, auto& dest) noexcept{
         dest ^= mask;
     }
 
-    template<typename U>
-    bool  BitMaskHdlr::checkMask(const U mask, const U dest) noexcept{
+    bool  BitMaskHdlr::checkMask(const auto mask, const auto dest) noexcept{
         return dest & mask;
     }
 
-    template<typename U>
-    U  BitMaskHdlr::getMaskValue(const U mask, const U orig)  noexcept{
+    auto  BitMaskHdlr::getMaskValue(const auto mask, const auto orig)  noexcept{
           return mask & orig ;
     }
 
@@ -641,7 +632,7 @@ namespace dnsclient{
        }
     }
 
-    void DnsBase::extractLocFromResponse(size_t idx, std::string& result) anyexcept{
+    void DnsBase::extractLocFromResponse(size_t idx, string& result) anyexcept{
         try{
             size_t expectedSize  =  idx + (4 * sizeof(uint8_t)) + ( 2 * sizeof(uint32_t));
             if(rsp.size() < expectedSize - 1)
@@ -671,7 +662,7 @@ namespace dnsclient{
         }
     }
 
-    void DnsBase::extractAddrFromResponse(size_t ipIdx, std::string& result) anyexcept{
+    void DnsBase::extractAddrFromResponse(size_t ipIdx, string& result) anyexcept{
         try{
             stringstream  sstr;
             if( (ipIdx + RSP_ADDR_IDX) >= safeSizeT(socketptr->getRecvLen()))
@@ -689,7 +680,7 @@ namespace dnsclient{
         }
     }
 
-    void DnsBase::extractMxFromResponse(size_t ipIdx, std::string& result) anyexcept{
+    void DnsBase::extractMxFromResponse(size_t ipIdx, string& result) anyexcept{
         try{
             if((ipIdx + sizeof(uint16_t)) >= safeSizeT(socketptr->getRecvLen()))
                 throw  string("DnsClient::extractMxFromResponse: Invalid Index: ").append(to_string(ipIdx));
@@ -712,7 +703,7 @@ namespace dnsclient{
         }
     }
 
-    void DnsBase::extractAddr6FromResponse(size_t ipIdx, std::string& result) anyexcept{
+    void DnsBase::extractAddr6FromResponse(size_t ipIdx, string& result) anyexcept{
         try{
             stringstream  sstr;
             if( (ipIdx + RSP_ADDR6_IDX) >= safeSizeT(socketptr->getRecvLen()))
@@ -989,7 +980,7 @@ namespace dnsclient{
                 throw string("Invalid addr : ").append(saddr);
     
             for(auto el : addr)
-                if(stoul(el) > std::numeric_limits<uint8_t>::max())
+                if(stoul(el) > numeric_limits<uint8_t>::max())
                    throw string("Invalid addr elem: ").append(el);
         }
     
@@ -1005,7 +996,7 @@ namespace dnsclient{
         return socketptr->isTimeout();
     }
 
-    const std::string&  DnsClient::getWarning(void) const noexcept{
+    const string&  DnsClient::getWarning(void) const noexcept{
         return socketptr->getWarningMsg();
     }
 
@@ -1043,7 +1034,7 @@ namespace dnsclient{
          }
     }
 
-    const string   DnsClient::getAllTxtSpecTypeResp(const std::string& type) const noexcept{
+    const string   DnsClient::getAllTxtSpecTypeResp(const string& type) const noexcept{
         auto         entry  { responseTypeIdx.find(rrStringToCode(type)) };
         string       buff;
 
@@ -1056,7 +1047,7 @@ namespace dnsclient{
         }
     }
 
-    const string  DnsClient::getOnextSpecTypeResp(const std::string& type) const noexcept{
+    const string  DnsClient::getOnextSpecTypeResp(const string& type) const noexcept{
         auto         entry  { responseTypeIdx.find(rrStringToCode(type)) };
 
         if(entry != responseTypeIdx.end())
@@ -1080,7 +1071,7 @@ namespace dnsclient{
          }
     }
 
-    const std::string  DnsClient::getDnsErrorTxt(uint16_t errcode) anyexcept {
+    const string  DnsClient::getDnsErrorTxt(uint16_t errcode) anyexcept {
         const vector<string> err {
                 /* 0 */    "NoError: No Error",
                 /* 1 */    "FormErr: Format Error.",

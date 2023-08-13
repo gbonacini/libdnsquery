@@ -1,6 +1,25 @@
+// -----------------------------------------------------------------
+// libdnsquery - a library to interrogate DNSs and more.
+// Copyright (C) 2018-2023  Gabriele Bonacini
+//
+// This program is free software for no profit use; you can redistribute 
+// it and/or modify it under the terms of the GNU General Public License 
+// as published by the Free Software Foundation; either version 2 of 
+// the License, or (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+// A commercial license is also available for a lucrative use.
+// -----------------------------------------------------------------
+
 #include <network.hpp>
 
 #include <unistd.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
@@ -8,21 +27,18 @@
 #include <cstdio>
 #include <cstring>
 
-#include <safeconversion.hpp>
-
 namespace networkutils{
 
-    using std::cerr;
-    using std::endl;
-    using std::string;
-    using std::to_string;
-    using std::unique_ptr;
-    using std::make_pair;
-    using std::make_unique;
-    using std::atomic_bool;
-    using std::chrono::system_clock;
-
-    using stringutils::trace;
+    using std::cerr,
+          std::endl,
+          std::string,
+          std::to_string,
+          std::unique_ptr,
+          std::make_pair,
+          std::make_unique,
+          std::atomic_bool,
+          std::chrono::system_clock,
+          stringutils::trace;
 
     SocketCreator& SocketCreator::getInstance(ServerId hst, const string& sp, time_t tout) anyexcept{
             #if defined __clang_major__ &&  __clang_major__ >= 4 
@@ -86,32 +102,27 @@ namespace networkutils{
                        }
     {}
 
-    atomic_bool Socket::alarmOn{false};
     atomic_bool Socket::sigpipeOn{false};
 
     Socket::Socket(ServerId hst)
-         : fd{-1}, serverid{hst}, len{0}, rcvResp{0}, timeout_sec{}, wrnMsg{""}, 
-           timeExc{false}, signalExit{false}
+         : fd{-1}, serverid{hst}, len{0}, rcvResp{0}, 
+           timeout_sec{DNS_DEFAULT_TIMEOUT, 0}, 
+           wrnMsg{""}, timeExc{false}, signalExit{false},
+           sockSet{}, sigActionPipe{}
     {
-        Socket::alarmOn              =  false;
         Socket::sigpipeOn            =  false;
-        sigemptyset(&sigActionAlarm.sa_mask);
-        sigActionAlarm.sa_flags      =  0;
-        sigActionAlarm.sa_handler    =  [](int){ Socket::alarmOn   = true; };
-        if(sigaction(SIGALRM, &sigActionAlarm, nullptr) != 0)
-             throw string("SocketTcp: setting alarm hdlr.").append(strerror(errno));
-        sigActionAlarm.sa_handler    =  [](int){ Socket::sigpipeOn = true; };
-        if(sigaction(SIGPIPE, &sigActionAlarm, nullptr) != 0)
-             throw string("SocketTcp: setting sigpipe hdlr.").append(strerror(errno));
+        sigActionPipe.sa_handler     =  [](int){ Socket::sigpipeOn = true; };
+        if(sigaction(SIGPIPE, &sigActionPipe, nullptr) != 0)
+             throw string("SocketUdpTraceroute: setting sigpipe hdlr.").append(strerror(errno));
     }
 
-    Socket::~Socket(void){
-        sigemptyset(&sigActionAlarm.sa_mask);
-        sigActionAlarm.sa_flags          = 0;
-        sigActionAlarm.sa_flags          = sigActionAlarm.sa_flags | SA_RESETHAND;
-        sigActionAlarm.sa_handler        = nullptr;
+    Socket::~Socket(void){ 
+        sigemptyset(&sigActionPipe.sa_mask);
+        sigActionPipe.sa_flags          = 0;
+        sigActionPipe.sa_flags          = sigActionPipe.sa_flags | SA_RESETHAND;
+        sigActionPipe.sa_handler        = nullptr;
 
-        static_cast<void>(sigaction(SIGALRM, &sigActionAlarm, nullptr));
+        static_cast<void>(sigaction(SIGPIPE, &sigActionPipe, nullptr));
     }
 
     ssize_t Socket::getRecvLen(void)  const noexcept{
@@ -131,7 +142,8 @@ namespace networkutils{
     }
 
     void  Socket::setTimeoutSecs(time_t tou)  noexcept{
-        timeout_sec  =  tou;
+        timeout_sec.tv_sec   =  tou;
+        timeout_sec.tv_usec  =  0;
     }
 
     #ifdef OFFENSIVE_REL
@@ -149,8 +161,7 @@ namespace networkutils{
         if(fd == -1)  
             throw string("SocketUdp: can't create socket.").append(strerror(errno));
 
-        int reuse { 1 };
-        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+        if (int reuse { 1 }; setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
             throw string("SocketUdp: can't configure socket SO_REUSEADDR.").append(strerror(errno));
     }
 
@@ -164,38 +175,48 @@ namespace networkutils{
     }
 
     void SocketUdp::sendMsg(const Buffer& query, Response& response) anyexcept {
-        alarm(static_cast<unsigned int>(timeout_sec));
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketUdp::sendMsg: select() error: ").append(strerror(errno));
+        }
+        if(selret == 0){
+            timeExc  =  true;
+            throw string("Timeout.");
+        } 
+
         ssize_t   ret   {  ::sendto(fd, query.data(),                           query.size(), 
                                     0,  reinterpret_cast<const Sockaddr*>(&sv), sizeof(sv)) };
-        alarm(0);
         if(ret == -1 ){ 
             if(closeOnError){ 
 	            close(fd); 
                 fd  =  -1;
             }
 
-            if(alarmOn)
-                throw string("Timeout.");
-
             throw string("SocketUdp::sendMsg: can't send the query: ").append(strerror(errno));
         }
 
-        alarm(static_cast<unsigned int>(timeout_sec));
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        selret  =  select(fd+1, &sockSet, nullptr, nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketUdp::sendMsg: select() error: ").append(strerror(errno));
+        }
+        if(selret == 0) {
+            wrnMsg   =  "SocketUdp::sendMsg: time exceed."; 
+            timeExc  =  true;
+            throw string("Timeout.");
+        } 
+
 	    rcvResp     =  ::recvfrom(fd, response.data(), response.size(), 0, reinterpret_cast< Sockaddr*>(&sv), &len);
-        alarm(0);
         if(rcvResp == -1){ 
             if(closeOnError){ 
-                if(Socket::alarmOn){
-                    wrnMsg   =  "SocketUdp::sendMsg: time exceed."; 
-                    timeExc  =  true;
-                }else{
-	               close(fd);  
-                   fd  =  -1;
-                }
+	            close(fd);  
+                fd  =  -1;
             }
-
-            if(alarmOn)
-                throw string("Timeout.");
 
             throw string("SocketUdp::sendMsg: can't read query response: ").append(strerror(errno));
         }
@@ -232,36 +253,45 @@ namespace networkutils{
     }
 
     void SocketUdpConnected::sendMsg(const Buffer& query, Response& response) anyexcept {
-        alarm(static_cast<unsigned int>(timeout_sec));
-        ssize_t   ret   {  ::send(fd, query.data(), query.size(), 0) };                            
-        alarm(0);
-        if(ret == -1 ){ 
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        int selret  =  select(fd+1, nullptr, &sockSet,  nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketUdpConnected::sendMsg: select() error: ").append(strerror(errno));
+        } else if(selret == 0) {
+            timeExc  =  true;
+            throw string("Timeout.");
+        } 
+
+        if(::send(fd, query.data(), query.size(), 0) == -1 ){ 
             if(closeOnError){ 
 	            close(fd); 
                 fd  =  -1;
             }
 
-            if(alarmOn)
-                throw string("Timeout.");
             throw string("SocketUdpConnected::sendMsg: can't send the query: ").append(strerror(errno));
         }
 
-        alarm(static_cast<unsigned int>(timeout_sec));
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        selret  =  select(fd+1, &sockSet, nullptr, nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketUdpConnected::sendMsg: select() error: ").append(strerror(errno));
+        } else if(selret == 0) {
+            wrnMsg   =  "SocketUdpConnected::sendMsg: time exceed."; 
+            timeExc  =  true;
+            throw string("Timeout.");
+        } 
+
         rcvResp     =  ::recv(fd, response.data(), response.size(), 0); 
-        alarm(0);
         if(rcvResp == -1){ 
             if(closeOnError){ 
-                if(Socket::alarmOn){
-                    wrnMsg   =  "SocketUdpConnected::sendMsg: time exceed."; 
-                    timeExc  =  true;
-                }else{
-	               close(fd);  
-                   fd  =  -1;
-                }
+	            close(fd);  
+                fd  =  -1;
             }
 
-            if(alarmOn)
-                throw string("Timeout.");
             throw string("SocketUdpConnected::sendMsg: can't read query response: ").append(strerror(errno));
         }
     }
@@ -278,17 +308,38 @@ namespace networkutils{
         if(fd == -1)  
             throw string("SocketTcp: can't create socket.").append(strerror(errno));
 
-        alarm(static_cast<unsigned int>(timeout_sec));
-        if (connect(fd, reinterpret_cast<const Sockaddr *>(&sv), sizeof(sv)) < 0)
-            throw string("SocketTcp: can't connect socket: ").append(strerror(errno));
-        alarm(0);
+        long sockattrs  { fcntl(fd, F_GETFL, nullptr) };
+        if(fcntl(fd, F_SETFL, sockattrs | O_NONBLOCK) == -1)
+            throw string("SocketTcp: fcntl error.").append(strerror(errno));
 
-        if(Socket::alarmOn){
-            shutdown(fd, SHUT_RDWR);
-            close(fd);
-            fd  =  -1;
-            throw string("SocketTcp: time exceed.");
+        if (connect(fd, reinterpret_cast<const Sockaddr *>(&sv), sizeof(sv)) == -1){
+            if(errno != EINPROGRESS){
+                throw string("SocketTcp: can't connect socket: ").append(strerror(errno));
+            }else{
+                FD_ZERO(&sockSet);
+                FD_SET(fd, &sockSet);
+        
+                int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+                if(selret < 0){
+                    throw string("SocketTcp: select() error: ").append(strerror(errno));
+                }
+                if(selret == 0) {
+                    close(fd);
+                    fd  =  -1;
+                    wrnMsg   =  "SocketTcp: connect: time exceed."; 
+                    timeExc  =  true;
+                    throw string("SocketTcp: Connect Timeout.");
+                } 
+                int       opt;
+                socklen_t sckl = sizeof(int);
+                getsockopt(fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void*>(&opt), &sckl); 
+                if(opt != 0)
+                    throw string("SocketTcp: connect() error: ").append(strerror(opt));
+            }
         }
+
+        if(fcntl(fd, F_SETFL, sockattrs) == -1)
+            throw string("SocketTcp: fcntl error.").append(strerror(errno));
 
         int reuse { 1 };
         if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
@@ -304,7 +355,7 @@ namespace networkutils{
 
         auto checkResult  { [&](ssize_t result, bool isSend){
             const string fName { isSend ? "SocketTcp::sendMsg:sendto: " : "SocketTcp::sendMsg:recvfrom: " };
-            if(Socket::alarmOn){
+            if(timeExc){
                 shutdown(fd, SHUT_RDWR);
                 fd       =  -1;
                 wrnMsg.append(fName).append(" time exceed."); 
@@ -342,19 +393,36 @@ namespace networkutils{
             }
         }};
 
-        alarm(static_cast<unsigned int>(timeout_sec));
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketTcp::sendMsg: select() error: ").append(strerror(errno));
+        } else if(selret == 0) {
+            timeExc  =  true;
+        } 
+
         ssize_t   ret   {  ::sendto(fd, query.data(),                           query.size(), 
                                     0,  reinterpret_cast<const Sockaddr*>(&sv), sizeof(sv)) };
-        alarm(0);
         checkResult(ret, true);
 
         response.clear();
         rcvResp  =  0;
 
         size_t   pos { 0 };
-        alarm(static_cast<unsigned int>(timeout_sec));
+        FD_ZERO(&sockSet);
+        FD_SET(fd, &sockSet);
+
+        selret  =  select(fd+1, &sockSet, nullptr, nullptr, &timeout_sec);
+        if(selret < 0){
+            throw string("SocketTcp::sendMsg: select() error: ").append(strerror(errno));
+        } else if(selret == 0) {
+            timeExc  =  true;
+            throw string("Timeout.");
+        } 
+
         ret     =  ::recvfrom(fd, tcpBuffer.data() + pos, tcpBuffer.size() - pos, 0, reinterpret_cast<Sockaddr*>(&sv), &len);
-        alarm(0);
 
         checkResult(ret, false);
         pos              += static_cast<size_t>(ret);
@@ -363,9 +431,18 @@ namespace networkutils{
         size_t declaredLen { ntohs(*(reinterpret_cast<uint16_t*>(tcpBuffer.data()))) };
 
         while( pos < declaredLen ) {
-            alarm(static_cast<unsigned int>(timeout_sec));
+            FD_ZERO(&sockSet);
+            FD_SET(fd, &sockSet);
+      
+            selret  =  select(fd+1, &sockSet, nullptr, nullptr, &timeout_sec);
+            if(selret < 0){
+                throw string("SocketTcp::sendMsg: select() error: ").append(strerror(errno));
+            } else if(selret == 0) {
+                timeExc  =  true;
+                throw string("Timeout.");
+            } 
+                         
             ret     =  ::recvfrom(fd, tcpBuffer.data() + pos, tcpBuffer.size() - pos, 0, reinterpret_cast<Sockaddr*>(&sv), &len);
-            alarm(0);
 
             checkResult(ret, false);
             pos     += static_cast<size_t>(ret);
@@ -420,11 +497,21 @@ namespace networkutils{
        }
     } 
 
+    atomic_bool SocketUdpTraceroute::alarmOn{false};
+
     SocketUdpTraceroute::SocketUdpTraceroute(ServerId hst)
         :  SocketUdpConnected{hst}, ttl{1},          icmpFd{-1},         
-           maxTtl{200},              port{DNS_PORT},  maxPort{65000}, //TODO: conf
-           buffer{},                remoteAddr{}
+           maxTtl{35},              port{DNS_PORT},  maxPort{65000}, //TODO: conf
+           buffer{},                remoteAddr{},
+           sigActionAlarm{},        tout_sec{DNS_DEFAULT_TIMEOUT}
     {
+        SocketUdpTraceroute::alarmOn =  false;
+        sigemptyset(&sigActionAlarm.sa_mask);
+        sigActionAlarm.sa_flags      =  0;
+        sigActionAlarm.sa_handler    =  [](int){ SocketUdpTraceroute::alarmOn   = true; };
+        if(sigaction(SIGALRM, &sigActionAlarm, nullptr) != 0)
+             throw string("SocketUdpTraceroute: setting alarm hdlr.").append(strerror(errno));
+
         setCloseOnError(false);
         sv.sin_port         = htons(port);
 
@@ -436,6 +523,16 @@ namespace networkutils{
 
     SocketUdpTraceroute::~SocketUdpTraceroute(void){
         if(icmpFd != -1) close(icmpFd);
+        sigemptyset(&sigActionAlarm.sa_mask);
+        sigActionAlarm.sa_flags          = 0;
+        sigActionAlarm.sa_flags          = sigActionAlarm.sa_flags | SA_RESETHAND;
+        sigActionAlarm.sa_handler        = nullptr;
+
+        static_cast<void>(sigaction(SIGALRM, &sigActionAlarm, nullptr));
+    }
+
+    void  SocketUdpTraceroute::setTimeoutSecs(time_t tou)  noexcept{
+        tout_sec  =  tou;
     }
 
     void SocketUdpTraceroute::setTtl(int newTtl) noexcept{
@@ -460,7 +557,7 @@ namespace networkutils{
     }
 
     void SocketUdpTraceroute::sendMsg(const Buffer& query, Response& response) anyexcept {
-        bool reachDest  { false };
+                bool reachDest  { false };
         while(!signalExit && !reachDest){
             applyTtl();
             if( ttl > maxTtl)
@@ -469,8 +566,9 @@ namespace networkutils{
             cerr << "ttl: " << ttl << " from: ";
 
             for(size_t i=0; i<3; ++i){
-                alarm(static_cast<unsigned int>(timeout_sec));
+                alarm(static_cast<unsigned int>(tout_sec));
                 start             =   system_clock::now();
+
                 ssize_t   ret   {  ::send(fd, query.data(), query.size(), 0) };                            
                 alarm(0);
                 if(ret == -1 ){ 
@@ -486,7 +584,8 @@ namespace networkutils{
 
                 string errMsg("ReadMsg timeout. ");
                 socklen_t                len=sizeof(Sockaddr);
-                alarm(static_cast<unsigned int>(timeout_sec));
+                alarm(static_cast<unsigned int>(tout_sec));
+
                 long int retIcmp   { ::recvfrom(icmpFd, buffer.data(), buffer.size(), 0, &remoteAddr, &len) };
                 if(retIcmp == -1 ){ 
                     wrnMsg  =  string("Icmp socket error: ").append(strerror(errno));
@@ -501,11 +600,12 @@ namespace networkutils{
                 alarm(0);
 
                 if(retIcmp == -1 ){ 
-                    alarm(static_cast<unsigned int>(timeout_sec));
+                    alarm(static_cast<unsigned int>(tout_sec));
+
                     rcvResp     =  ::recvfrom(fd, response.data(), response.size(), 0, &remoteAddr, &len);
                     alarm(0);
                     if(rcvResp == -1){ 
-                        if(Socket::alarmOn){
+                        if(SocketUdpTraceroute::alarmOn){
                             wrnMsg   =  "SocketUdpConnected::sendMsg: response time exceed."; 
                             timeExc  =  true;
                         }else{    

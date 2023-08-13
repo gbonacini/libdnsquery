@@ -51,33 +51,33 @@ case $host_os in
   darwin* )
               OPTIMIZATION="-O2 "
               if test "x$CC" = xgcc; then
-                    CXXFLAGS=" -std=c++14 -g -Weverything \
+                    CXXFLAGS=" -std=c++20 -g -Weverything \
                              -D_FORTIFY_SOURCE=2 ${OPTIMIZATION} -fstack-protector \
                              --param=ssp-buffer-size=4 -Wformat -Werror=format-security \
                              -Wno-deprecated-declarations -Wno-documentation -Wno-c++98-compat \
                              -Wno-padded -Wno-c++98-compat-pedantic -Wno-undefined-func-template "
 		            LDFLAGS="$LDFLAGS "
               else
-                    CXXFLAGS=" -std=c++14 -O2 -g -Wall "
+                    CXXFLAGS=" -std=c++20 -O2 -g -Wall "
 		            LDFLAGS="$LDFLAGS  "
               fi
         ;;
   linux*)
               OPTIMIZATION="-O2 "
               if test "x$CC" = xgcc; then
-                    CXXFLAGS=" -std=c++14 -g -Wall -Wextra  -DLINUX_OS \
+                    CXXFLAGS=" -std=c++20 -g -Wall -Wextra  -DLINUX_OS \
                              -D_FORTIFY_SOURCE=2 ${OPTIMIZATION} -fstack-protector   \
                              --param=ssp-buffer-size=4 -Wformat -Werror=format-security "
                     LDFLAGS=" $LDFLAGS -Wl,-z,relro  "
               else
-                    CXXFLAGS="-DLINUX_OS -std=c++14 -O2 -g -Wall  "
+                    CXXFLAGS="-DLINUX_OS -std=c++20 -O2 -g -Wall  "
 		        LDFLAGS=" $LDFLAGS  "
               fi
 
               AC_CHECK_HEADERS([sys/capability.h],[],[AC_MSG_FAILURE([could not find lib cap-dev])],[])
         ;;
     *)
-            CXXFLAGS=" -std=c++14  -O2 -g -Wall  "
+            CXXFLAGS=" -std=c++20  -O2 -g -Wall  "
 	      LDFLAGS=" $LDFLAGS   "
             #AC_MSG_ERROR([Your platform is not currently supported])
         ;;

@@ -1,18 +1,35 @@
+// -----------------------------------------------------------------
+// libdnsquery - a library to interrogate DNSs and more.
+// Copyright (C) 2018-2023  Gabriele Bonacini
+//
+// This program is free software for no profit use; you can redistribute 
+// it and/or modify it under the terms of the GNU General Public License 
+// as published by the Free Software Foundation; either version 2 of 
+// the License, or (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+// A commercial license is also available for a lucrative use.
+// -----------------------------------------------------------------
+
 #include <trace.hpp>
 
 namespace stringutils{
-  using std::cerr;
-  using std::endl;
-  using std::hex;
-  using std::dec;
-  using std::setfill;
-  using std::setw;
-  using std::string;
-  using std::vector;
+  using std::cerr,
+        std::hex,
+        std::dec,
+        std::setfill,
+        std::setw,
+        std::string,
+        std::vector;
 
   void  trace(const char* header, const uint8_t* buff, const size_t size,
               size_t begin, size_t end) noexcept{
-     cerr << header << '\n' << endl;
+     cerr << header << "\n\n"; 
  
      bool last  { false }, 
           first { false };
@@ -44,16 +61,16 @@ namespace stringutils{
         first = false;
         cerr << '\n';
      }
-     cerr << '\n' << endl;
+     cerr << "\n\n";
   }
  
-  void trace(string header) noexcept{
-     cerr << header << endl << endl;
+  void trace(auto header) noexcept{
+     cerr << header << "\n\n";
   }
-
-  void trace(string header, const vector<uint8_t>* buff,
+ 
+  void trace(auto header, const vector<uint8_t>* buff,
              size_t begin, size_t end, size_t max) noexcept{
-     cerr << header << '\n' << endl;
+     cerr << header << "\n\n";
 
      size_t len    { max ? max : buff->size() };
      bool   last   { false }, 
@@ -87,12 +104,12 @@ namespace stringutils{
         first = false;
         cerr << '\n';
      }
-     cerr << '\n' << endl;
+     cerr << "\n\n";
   }
 
-  void trace(string header, const vector<uint8_t>& buff,
+  void trace(auto header, const vector<uint8_t>& buff,
              size_t begin, size_t end, size_t max) noexcept{
-     cerr << header << '\n' << endl;
+     cerr << header << "\n\n";
 
      size_t len    { max ? max : buff.size() };
      bool   last   { false }, 
@@ -126,6 +143,14 @@ namespace stringutils{
         first = false;
         cerr << '\n';
      }
-     cerr << '\n' << endl;
+     cerr << "\n\n";
   }
+
+   template  void trace(string& header) noexcept;
+   template  void trace(const char* header) noexcept;
+   template  void trace(string& header, const vector<uint8_t>* buff, size_t begin, size_t end = 0, size_t max) noexcept;
+   template  void trace(const char* header, const vector<uint8_t>* buff, size_t begin, size_t end = 0, size_t max) noexcept;
+   template  void trace(string&  header, const vector<uint8_t>& buff, size_t begin, size_t end, size_t max ) noexcept;
+   template  void trace(const char* header, const vector<uint8_t>& buff, size_t begin, size_t end, size_t max ) noexcept;
+
 } // End Namespace

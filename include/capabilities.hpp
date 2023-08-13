@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,22 +16,21 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef  LINUX_CAPABILITIES__BG_HPP
-#define  LINUX_CAPABILITIES__BG_HPP
+#pragma once
 
-#include <sys/prctl.h>
 #include <sys/capability.h>
 
 #include <string>
-
 #include <anyexcept.hpp>
+#include <debug.hpp>
 
-namespace capabilities{
+namespace capabilities {
 
-        class Capability{
+    class Capability{
             public:
-                   explicit  Capability(bool noRoot);
-                             ~Capability(void);
+                             Capability(void)                                 noexcept;
+                             ~Capability(void)                                noexcept;
+                   void      init(bool noRoot)                                anyexcept;
                    void      printStatus(void)                         const  noexcept;
                    void      getCredential(void)                              anyexcept;
                    void      reducePriv(const std::string& capText)           anyexcept;
@@ -43,17 +42,15 @@ namespace capabilities{
                              egid;
                    cap_t     cap,
                              newcaps;
-        };
+    };
 
-        class CapabilityException final{
+    class CapabilityException final{
             public:
-               explicit CapabilityException(std::string&  errString);
-               explicit CapabilityException(std::string&& errString);   
-               const std::string& what(void)                           const  noexcept;
+               CapabilityException(std::string&  errString);
+               CapabilityException(std::string&& errString);
+               std::string what(void)                                  const  noexcept;
             private:
                std::string errorMessage;
-        };
+    };
 
-} // End Namespace
-
-#endif
+} // End namespace capabilities

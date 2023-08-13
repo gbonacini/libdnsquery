@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------
 // libdnsquery - a library to interrogate DNSs and more.
-// Copyright (C) 2018  Gabriele Bonacini
+// Copyright (C) 2018-2023  Gabriele Bonacini
 //
 // This program is free software for no profit use; you can redistribute 
 // it and/or modify it under the terms of the GNU General Public License 
@@ -16,8 +16,7 @@
 // A commercial license is also available for a lucrative use.
 // -----------------------------------------------------------------
 
-#ifndef PARSECMDLINE_BG_HPP
-#define PARSECMDLINE_BG_HPP
+#pragma once
 
 #include <unistd.h>
 
@@ -69,4 +68,3 @@ namespace parcmdline {
 
 } // End Namespace
 
-#endif
