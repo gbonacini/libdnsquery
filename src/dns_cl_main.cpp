@@ -14,7 +14,7 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 // A commercial license is also available for a lucrative use.
-// -----------------------------------------------------------------
+// ----------------------------------------------------------------
 
 #include <dns_cl_main.hpp>
 
@@ -173,54 +173,51 @@ int main(int argc, char** argv){
         #endif
         dnscl.sendQuery();
         if(dnscl.isTimeout())
-            cerr << dnscl.getWarning() << endl;
+            cerr << dnscl.getWarning() << '\n';
 
         if(pcl.isSet('l') && !pcl.isSet('t')) 
-            cerr << "Response Length: " << dnscl.getRespLength() << endl;
+            cerr << "Response Length: " << dnscl.getRespLength() << '\n';
 
         #ifdef OFFENSIVE_REL
             if(pcl.isSet('t') && !pcl.isSet('S')){
         #else
             if(pcl.isSet('t')){
         #endif
-           cerr << endl
-                << "DNS Lookup: Query: " <<  dnscl.getQueryTxtFromResp() <<  endl
-                << "DNS Lookup: Resp: " ;
+           cerr << "\nDNS Lookup: Query: " <<  dnscl.getQueryTxtFromResp() 
+                << "\nDNS Lookup: Resp: " ;
         }
 
         if(pcl.isSet('A'))
-            cout << dnscl.getAllTxtFromResp() <<  endl;
+            cout << dnscl.getAllTxtFromResp() <<  '\n';
         else if(pcl.isSet('a'))
-            cout << dnscl.getAllTxtSpecTypeResp(pcl.getValueUpper('a')) <<  endl;
+            cout << dnscl.getAllTxtSpecTypeResp(pcl.getValueUpper('a')) <<  '\n';
         else if(pcl.isSet('u'))
-            cout << dnscl.getOnextSpecTypeResp(pcl.getValueUpper('u')) <<  endl;
+            cout << dnscl.getOnextSpecTypeResp(pcl.getValueUpper('u')) <<  '\n';
         #ifdef OFFENSIVE_REL
         else if(!pcl.isSet('S'))
         #else
         else
         #endif
-            cout << dnscl.getLastTxtFromResp() <<  endl;
+            cout << dnscl.getLastTxtFromResp() <<  '\n';
 
         if(dnscl.getReturnCode() != 0){
             ret = 1;
             cerr << "DNS response notifies an arror code: " 
-                 << dnscl.getDnsErrorTxt(dnscl.getReturnCode()) << endl;
+                 << dnscl.getDnsErrorTxt(dnscl.getReturnCode()) << '\n';
         }
-
-        return ret;
 
     }catch(const string& err){
         ret = 1;
-        cerr << "Exception: " << err << endl;
+        cerr << "Exception: " << err << '\n';
     #ifdef OFFENSIVE_REL
     #ifdef LINUX_OS
        }catch(const capabilities::CapabilityException& ex){
-            cerr << "Exception: " << ex.what() << endl;
+            cerr << "Exception: " << ex.what() << '\n';
     #endif
     #endif
     }catch(...){
         ret = 1;
-        cerr << "Exception: Unexpected" << endl;
+        cerr << "Exception: Unexpected\n";
     }
 
 	return ret;
@@ -228,10 +225,10 @@ int main(int argc, char** argv){
 
 void paramError(const char* progname, const char* err) noexcept{
 
-   if(err != nullptr) cerr << err << endl << endl;
+   if(err != nullptr) cerr << err << "\n\n";
 
    cerr << progname   << " - a cmd line dns query tool.                                   \n"
-                      << " GBonacini - (C) 2018                                           \n"                                      
+                      << " GBonacini - (C) 2018-2023                                      \n"                                      
         << "Syntax:                                                                       \n"                                                                    
         #ifdef OFFENSIVE_REL
         << "       "  << progname << " [ -d dns_address ] [-s site_name | -e ranges]      \n"
@@ -267,13 +264,13 @@ void paramError(const char* progname, const char* err) noexcept{
         << "       "  << "-e range.  Enumerate all the reverse lookups in the given range.\n"
         #endif
         << "       "  << "-h print this help message.                                     \n"                                   
-        << "       "  << "-V version information.                                         \n"  << endl;
+        << "       "  << "-V version information.                                         \n\n";
 
    exit(1);
 }
 
 void versionInfo(void) noexcept{
-   cerr << PACKAGE << " version: " VERSION << endl;
+   cerr << PACKAGE << " version: " VERSION << '\n';
    exit(1);
 }
 

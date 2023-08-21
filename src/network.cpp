@@ -30,7 +30,6 @@
 namespace networkutils{
 
     using std::cerr,
-          std::endl,
           std::string,
           std::to_string,
           std::unique_ptr,
@@ -57,7 +56,7 @@ namespace networkutils{
 
     unique_ptr<Socket>  SocketCreator::createSocket(SocketTypes stype) anyexcept {
          try{
-            return creatorsMap[stype]();
+             return creatorsMap[stype]();
          }catch(string& err){
              throw string("SocketCreator::createSocket: error : ").append(err);
          }catch(...){
@@ -118,9 +117,9 @@ namespace networkutils{
 
     Socket::~Socket(void){ 
         sigemptyset(&sigActionPipe.sa_mask);
-        sigActionPipe.sa_flags          = 0;
-        sigActionPipe.sa_flags          = sigActionPipe.sa_flags | SA_RESETHAND;
-        sigActionPipe.sa_handler        = nullptr;
+        sigActionPipe.sa_flags       = 0;
+        sigActionPipe.sa_flags       = sigActionPipe.sa_flags | SA_RESETHAND;
+        sigActionPipe.sa_handler     = nullptr;
 
         static_cast<void>(sigaction(SIGPIPE, &sigActionPipe, nullptr));
     }
@@ -170,19 +169,17 @@ namespace networkutils{
     }
 
     SocketUdp::~SocketUdp(void){
-        if(fd != -1)     
-            close(fd);
+        if(fd != -1)  close(fd);
     }
 
     void SocketUdp::sendMsg(const Buffer& query, Response& response) anyexcept {
         FD_ZERO(&sockSet);
         FD_SET(fd, &sockSet);
 
-        int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+        int selret  {  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec) };
         if(selret < 0){
             throw string("SocketUdp::sendMsg: select() error: ").append(strerror(errno));
-        }
-        if(selret == 0){
+        } else if(selret == 0){
             timeExc  =  true;
             throw string("Timeout.");
         } 
@@ -194,7 +191,6 @@ namespace networkutils{
 	            close(fd); 
                 fd  =  -1;
             }
-
             throw string("SocketUdp::sendMsg: can't send the query: ").append(strerror(errno));
         }
 
@@ -204,8 +200,7 @@ namespace networkutils{
         selret  =  select(fd+1, &sockSet, nullptr, nullptr, &timeout_sec);
         if(selret < 0){
             throw string("SocketUdp::sendMsg: select() error: ").append(strerror(errno));
-        }
-        if(selret == 0) {
+        } else if(selret == 0) {
             wrnMsg   =  "SocketUdp::sendMsg: time exceed."; 
             timeExc  =  true;
             throw string("Timeout.");
@@ -248,15 +243,14 @@ namespace networkutils{
     }
 
     SocketUdpConnected::~SocketUdpConnected(void){
-        if(fd != -1)     
-            close(fd);
+        if(fd != -1)  close(fd);
     }
 
     void SocketUdpConnected::sendMsg(const Buffer& query, Response& response) anyexcept {
         FD_ZERO(&sockSet);
         FD_SET(fd, &sockSet);
 
-        int selret  =  select(fd+1, nullptr, &sockSet,  nullptr, &timeout_sec);
+        int selret  {  select(fd+1, nullptr, &sockSet,  nullptr, &timeout_sec) };
         if(selret < 0){
             throw string("SocketUdpConnected::sendMsg: select() error: ").append(strerror(errno));
         } else if(selret == 0) {
@@ -319,11 +313,10 @@ namespace networkutils{
                 FD_ZERO(&sockSet);
                 FD_SET(fd, &sockSet);
         
-                int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+                int selret  {  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec) };
                 if(selret < 0){
                     throw string("SocketTcp: select() error: ").append(strerror(errno));
-                }
-                if(selret == 0) {
+                } else if(selret == 0) {
                     close(fd);
                     fd  =  -1;
                     wrnMsg   =  "SocketTcp: connect: time exceed."; 
@@ -331,7 +324,7 @@ namespace networkutils{
                     throw string("SocketTcp: Connect Timeout.");
                 } 
                 int       opt;
-                socklen_t sckl = sizeof(int);
+                socklen_t sckl { sizeof(int) };
                 getsockopt(fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void*>(&opt), &sckl); 
                 if(opt != 0)
                     throw string("SocketTcp: connect() error: ").append(strerror(opt));
@@ -347,8 +340,7 @@ namespace networkutils{
     }
 
     SocketTcp::~SocketTcp(void){
-        if(fd != -1)     
-            close(fd);
+        if(fd != -1)  close(fd);
     }
 
     void SocketTcp::sendMsg(const Buffer& query, Response& response) anyexcept{
@@ -396,7 +388,7 @@ namespace networkutils{
         FD_ZERO(&sockSet);
         FD_SET(fd, &sockSet);
 
-        int selret  =  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec);
+        int selret  {  select(fd+1, nullptr, &sockSet, nullptr, &timeout_sec) };
         if(selret < 0){
             throw string("SocketTcp::sendMsg: select() error: ").append(strerror(errno));
         } else if(selret == 0) {
@@ -462,8 +454,7 @@ namespace networkutils{
        end               =   system_clock::now();
        elapsed_seconds   =   end - start;
        cerr << "Elapsed Time: "    << elapsed_seconds.count() << '\n' << '\n'
-            << "Response Length: " <<  rcvResp                << '\n'    
-            <<  endl;
+            << "Response Length: " <<  rcvResp                << "\n\n";
        trace("Message sent:", query, 0, 12);
        trace("Message received:", response.data(), static_cast<size_t>(rcvResp), 0, 12);
     } 
@@ -485,12 +476,12 @@ namespace networkutils{
                cerr << rcvResp        << " bytes from " << serverid                  
                     << " dns_seq="    << seq           
                     << " time="       << elapsed_seconds.count()  
-                    << " ms"          << endl;
+                    << " ms\n";
            } catch(const string& err){
                static_cast<void>(err);
                cerr <<  " Request timeout for " <<  serverid                  
                     <<  " dns_seq="             <<  seq           
-                    <<  endl;
+                    <<  '\n';
            }
            seq++;
            static_cast<void>(sleep(1));
@@ -565,7 +556,7 @@ namespace networkutils{
 
             cerr << "ttl: " << ttl << " from: ";
 
-            for(size_t i=0; i<3; ++i){
+            for(size_t i{0}; i<3; ++i){
                 alarm(static_cast<unsigned int>(tout_sec));
                 start             =   system_clock::now();
 
@@ -582,8 +573,8 @@ namespace networkutils{
                     throw string("SocketUdpConnected::sendMsg: can't send the query: ").append(strerror(errno));
                 }
 
-                string errMsg("ReadMsg timeout. ");
-                socklen_t                len=sizeof(Sockaddr);
+                string       errMsg{"ReadMsg timeout. "};
+                socklen_t    len { sizeof(Sockaddr) };
                 alarm(static_cast<unsigned int>(tout_sec));
 
                 long int retIcmp   { ::recvfrom(icmpFd, buffer.data(), buffer.size(), 0, &remoteAddr, &len) };
@@ -599,7 +590,7 @@ namespace networkutils{
                 }
                 alarm(0);
 
-                if(retIcmp == -1 ){ 
+                if(retIcmp == -1 ){  //TODO CHECK
                     alarm(static_cast<unsigned int>(tout_sec));
 
                     rcvResp     =  ::recvfrom(fd, response.data(), response.size(), 0, &remoteAddr, &len);
@@ -609,7 +600,7 @@ namespace networkutils{
                             wrnMsg   =  "SocketUdpConnected::sendMsg: response time exceed."; 
                             timeExc  =  true;
                         }else{    
-                                cerr << "Received: " << string(strerror(errno)) << endl;
+                                cerr << "Received: " << string(strerror(errno)) << '\n';
                         }
                     }else{
                         reachDest  =  true;
@@ -619,7 +610,7 @@ namespace networkutils{
                     }
                 }
             }
-            cerr << endl;
+            cerr << '\n';
         }
     }
 
@@ -635,8 +626,7 @@ namespace networkutils{
         end              =   system_clock::now();
         elapsed_seconds  =   end - start;
         cerr << "Elapsed Time: "    <<  elapsed_seconds.count() << '\n' << '\n' 
-             << "Response Length: " <<  rcvResp                 << '\n'
-             << endl;
+             << "Response Length: " <<  rcvResp                 << "\n\n";
         trace("Message sent:", query, 0, 12);
         trace("Message received:", response.data(), static_cast<size_t>(rcvResp), 0, 12);
     }

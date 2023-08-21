@@ -38,8 +38,7 @@ namespace rngreader{
 
     template<typename T>
     RngReader<T>::~RngReader(void){
-        if(rngFd != -1)
-            close(rngFd);
+        if(rngFd != -1) close(rngFd);
     }
 
     template<typename T>

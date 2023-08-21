@@ -40,7 +40,6 @@ namespace dnsclient{
           std::stringstream,
           std::cerr,
           std::cout,
-          std::endl,
           std::getline,
           std::chrono::time_point,
           std::chrono::system_clock,
@@ -70,12 +69,13 @@ namespace dnsclient{
           networkutils::SocketTypes,
           networkutils::SocketUdpTraceroute,
           typeutils::safeSizeT,
+          typeutils::TypesUtilsException,
           stringutils::trace;
 
     extern "C" {
        void libdnsquery_is_present(void){
            // To semplify autoconf tests
-           cerr << "libdnsquery is present" << endl;
+           cerr << "libdnsquery is present\n";
        }
     }
 
@@ -532,6 +532,8 @@ namespace dnsclient{
            throw  string("DnsClient::extractQueryPartFromResponse: Index Error parsing query section in response, rsp len: ")\
                         .append(to_string(socketptr->getRecvLen()))\
                         .append(" - ").append(err.what());
+       }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractQueryPartFromResponse: attempt to convert wrong data").append(ex.what());
        }catch(...){
            resetOnErr();
            throw  string("DnsClient::extractQueryPartFromResponse: Unexpected Error parsing query section in response, rsp len: ").append(to_string(socketptr->getRecvLen()));
@@ -627,6 +629,8 @@ namespace dnsclient{
                         .append(" - ").append(err.what());
        }catch(const string& err){
            throw  string("DnsBase::extractResponse: ").append(err);
+       }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractResponse: attempt to convert wrong data").append(ex.what());
        }catch(...){
            throw  string("DnsBase::extractResponse: Unexpected Error.");
        }
@@ -675,6 +679,8 @@ namespace dnsclient{
            throw  string("DnsClient::extractAddrFromResponse: Index Error.")\
                         .append(to_string(socketptr->getRecvLen()))\
                         .append(" - ").append(err.what());
+        }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractAddrFromResponse: attempt to convert wrong data").append(ex.what());
         }catch(...){
            throw  string("DnsClient::extractAddrFromResponse: Unexpected Error.");
         }
@@ -698,6 +704,8 @@ namespace dnsclient{
                         .append(" - ").append(err.what());
         }catch(const string& err){
            throw string("DnsClient::extractMxFromResponse: ").append(err);
+        }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractMxFromResponse: attempt to convert wrong data").append(ex.what());
         }catch(...){
            throw  string("DnsClient::extractMxFromResponse: Unexpected Error.");
         }
@@ -718,6 +726,8 @@ namespace dnsclient{
            throw  string("DnsClient::extractAddr6FromResponse: Index Error.")\
                         .append(to_string(socketptr->getRecvLen()))\
                         .append(" - ").append(err.what());
+        }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractAddr6FromResponse: attempt to convert wrong data").append(ex.what());
         }catch(...){
            throw  string("DnsClient::extractAddr6FromResponse: Unexpected Error.");
         }
@@ -778,6 +788,8 @@ namespace dnsclient{
                         .append(" - ").append(err.what());
        }catch(const string& err){
            throw string("DnsClient::extractSoaTextFromResponse: ").append(err);
+        }catch(TypesUtilsException& ex){
+           throw  string("DnsClient::extractSoaTextFromResponse: attempt to convert wrong data").append(ex.what());
        }catch(...){
            throw string("DnsClient::extractInfoTextFromResponse: Unexpected Error parsing resp section in response, rsp len: ").append(to_string(socketptr->getRecvLen()));
        }
@@ -839,46 +851,62 @@ namespace dnsclient{
     }
 
     size_t  DnsBase::getQuerysNo(void)  anyexcept{
-        const size_t idx   { static_cast<size_t>(DNS_QDCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0))};
+        try{
+            const size_t idx   { static_cast<size_t>(DNS_QDCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0))};
 
-        if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
-             throw  string("DnsClient::getQuerysNo: Index Error, rsp len: ")\
-                          .append(to_string(socketptr->getRecvLen()))\
-                          .append(" - idx: ").append(to_string(idx + 1));
-        return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx )));
+            if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
+                 throw  string("DnsClient::getQuerysNo: Index Error, rsp len: ")\
+                              .append(to_string(socketptr->getRecvLen()))\
+                              .append(" - idx: ").append(to_string(idx + 1));
+            return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx )));
+        }catch(TypesUtilsException& ex){
+            throw  string("DnsClient::getQuerysNo: attempt to convert wrong data").append(ex.what());
+        }
     }
 
     size_t  DnsBase::getResponsesNo(void)  anyexcept{
-        const size_t idx   { static_cast<size_t>(DNS_ANCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
+        try{
+           const size_t idx   { static_cast<size_t>(DNS_ANCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
 
-        if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
-            throw  string("DnsClient::getResponsesNo: Index Error, rsp len: ")\
-                         .append(to_string(socketptr->getRecvLen()))\
-                         .append(" - idx: ").append(to_string(idx + 1));
+           if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
+               throw  string("DnsClient::getResponsesNo: Index Error, rsp len: ")\
+                            .append(to_string(socketptr->getRecvLen()))\
+                            .append(" - idx: ").append(to_string(idx + 1));
 
-        return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+           return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+        }catch(TypesUtilsException& ex){
+            throw  string("DnsClient::getResponsesNo: attempt to convert wrong data").append(ex.what());
+        }
     }
 
     size_t  DnsBase::getRRAuthNo(void) anyexcept{
-        const size_t idx   { static_cast<size_t>(DNS_NSCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
+        try{
+            const size_t idx   { static_cast<size_t>(DNS_NSCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
 
-        if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
-           throw  string("DnsClient::getRRAuthNo: Index Error, rsp len: ")\
-                        .append(to_string(socketptr->getRecvLen()))\
-                        .append(" - idx: ").append(to_string(idx + 1));
-
-        return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+            if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
+               throw  string("DnsClient::getRRAuthNo: Index Error, rsp len: ")\
+                            .append(to_string(socketptr->getRecvLen()))\
+                            .append(" - idx: ").append(to_string(idx + 1));
+    
+            return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+        }catch(TypesUtilsException& ex){
+            throw  string("DnsClient::getRRAuthNo: attempt to convert wrong data").append(ex.what());
+        }
     }
 
     size_t  DnsBase::getRRAddNo(void)  anyexcept{
-        const size_t idx   { static_cast<size_t>(DNS_ARCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
+        try{
+            const size_t idx   { static_cast<size_t>(DNS_ARCOUNT_IDX + (tcpQuery ? DNS_RESP_DATA_TCP_DELTA : 0)) };
 
-        if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
-           throw  string("DnsClient::getRRAddNo: Index Error, rsp len: ")\
-                        .append(to_string(socketptr->getRecvLen()))\
-                        .append(" - idx: ").append(to_string(idx + 1));
-
-        return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+            if( (idx + 1) >= safeSizeT(socketptr->getRecvLen()))
+               throw  string("DnsClient::getRRAddNo: Index Error, rsp len: ")\
+                            .append(to_string(socketptr->getRecvLen()))\
+                            .append(" - idx: ").append(to_string(idx + 1));
+    
+            return ntohs(*(reinterpret_cast<const uint16_t*>(rsp.data() + idx)));
+        }catch(TypesUtilsException& ex){
+            throw  string("DnsClient::getRRAddNo: attempt to convert wrong data").append(ex.what());
+        }
     }
 
     DnsClient::DnsClient(string dns, string site)
@@ -1129,7 +1157,6 @@ namespace dnsclient{
         setTranId();
 
         socketUdpTraceroute.sendMsg(queryAssembl, rsp);
-
     }
 
     #ifdef OFFENSIVE_REL
